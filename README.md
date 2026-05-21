@@ -1,77 +1,77 @@
 # MarkFlow
 
-A cyberpunk-flavored, local-first Markdown editor with built-in knowledge graph and local LLM integration.
+赛博朋克风的本地优先 Markdown 编辑器，内置知识图谱与本地 LLM 集成。
 
-Built on Tauri 2 + React + TypeScript. Runs as a native desktop app on macOS / Windows / Linux.
+基于 Tauri 2 + React + TypeScript，跨平台原生桌面应用（macOS / Windows / Linux）。
 
-## Highlights
+## 特性概览
 
-- **Markdown editor** — WYSIWYG (Milkdown / Crepe) + code mirror fallback for non-md files
-- **Local-first** — your files stay on disk; no cloud account required
-- **Knowledge graph** — wikilinks `[[X]]` + standard md links resolved into a navigable graph (powered by `react-force-graph-2d`)
-- **Backlinks** — every note knows who references it
-- **Semantic search** — sqlite-free vector index; embeddings via your local LLM endpoint, top-K via cosine in JS
-- **AI assistant** — chat panel that streams from any OpenAI-compatible endpoint (vLLM, Ollama, sglang…); insert into cursor; selection-action menu (explain / summarize / rewrite / translate)
-- **Mission Control** — task list with octagonal hacker checkbox, priority levels, countdown timer, and an "ALL OBJECTIVES CLEARED" glitch flash
-- **Cyber acoustic** — built-in procedurally-synthesized ambient soundscapes (rain / server room / cyber wind / tape hiss), no audio files bundled
-- **Focus modes** — auto-fade chrome when typing; manual Matrix Zen mode (⌘⇧Z) with CRT-tinted text
-- **Cmd+click wikilink navigation** in editor
-- **Git status indicators** — `[+]` cyan for new, `[M]` flashing magenta for modified, with a save-beam animation when you press ⌘S
-- **Auto-update** — Tauri updater, signed with minisign, manifest from GitHub releases
+- **Markdown 编辑器** — WYSIWYG（Milkdown / Crepe）+ CodeMirror 兜底处理非 md 文件
+- **本地优先** — 你的文件就在你硬盘上，不需要任何云账号
+- **知识图谱** — 自动解析 `[[wikilink]]` 与标准 markdown 链接，可视化文档之间的关系（`react-force-graph-2d`）
+- **反链面板** — 每个笔记都知道是谁引用了自己
+- **语义检索** — 无需 sqlite，纯内存向量索引；调你本地 LLM 拿 embedding，cosine top-K 全在前端跑
+- **AI 助手** — 流式对话面板，对接任何 OpenAI 兼容端点（vLLM / Ollama / sglang / LM Studio…）；选区右键菜单（解释 / 总结 / 改写 / 翻译）；一键插入光标位置
+- **任务面板（Mission Control）** — 八角形 hacker checkbox、优先级、毁灭倒计时、"ALL OBJECTIVES CLEARED" glitch 闪现
+- **环境音** — 内建程序化合成的环境声（雨夜 / 机房 / 赛博风 / 磁带底噪），零音频文件依赖
+- **专注模式** — 自动 fade chrome（打字时侧栏隐去）+ 手动 Matrix Zen（⌘⇧Z，CRT 绿字效果）
+- **Wikilink Cmd+Click 跳转** — 在编辑器里直接点击 `[[X]]` 切换文档
+- **Git 状态指示** — 文件树里新文件 `[+]` 青色、已修改 `[M]` 品红闪烁，保存时一道青光从左到右扫过文件行
+- **自动更新** — Tauri updater + minisign 签名 + GitHub Releases manifest
 
-## Architecture
+## 架构
 
 ```
-Frontend  React + TypeScript + Tailwind, Milkdown (Crepe), CodeMirror, Zustand
-Bridge    Tauri 2 (Rust) — file IO, link graph, search, git status, mtime
-LLM       OpenAI-compatible HTTP — pluggable, configured in Settings
-Storage   localStorage for prefs / mission list; appLocalData for vector index
+前端    React + TypeScript + Tailwind / Milkdown (Crepe) / CodeMirror / Zustand
+桥层    Tauri 2 (Rust) — 文件 IO、链接索引、关键字搜索、Git 状态、mtime
+LLM     OpenAI 兼容 HTTP — 完全可插拔，在 Settings 里配
+存储    localStorage（偏好 / 任务清单）+ appLocalData（向量索引文件）
 ```
 
-## Develop
+## 开发
 
-Requires Rust + Node 20+.
+需要 Rust + Node 20+。
 
 ```bash
 npm install
 npm run tauri dev
 ```
 
-## Build a signed DMG (macOS)
+## 打 macOS 签名 DMG
 
-You'll need:
+你需要：
 
-1. An Apple Developer ID Application certificate in your Keychain
-2. A Tauri updater signing key — generate one:
+1. 钥匙串里有一张 **Apple Developer ID Application** 证书
+2. 一把 Tauri updater minisign 私钥 — 没有的话生成一把：
    ```bash
    npx tauri signer generate -w ~/.tauri/markflow-updater.key
    ```
-   Then paste the public key into `src-tauri/tauri.conf.json#plugins.updater.pubkey`
-3. Copy `.env.signing.example` → `.env.signing` and fill in your credentials
+   把对应的 `.pub` 公钥内容贴到 `src-tauri/tauri.conf.json#plugins.updater.pubkey`
+3. 把 `.env.signing.example` 复制成 `.env.signing`，填上你的真实凭据
 
-Then:
+然后：
 
 ```bash
 bash scripts/build-signed-dmg.sh
 ```
 
-This will codesign, notarize, staple, and produce:
+脚本会完成 codesign → 公证 → staple，产物：
 
-- `MarkFlow_<version>_aarch64.dmg` — what end users download
-- `app.tar.gz` + `app.tar.gz.sig` — auto-update payload
+- `MarkFlow_<version>_aarch64.dmg` — 用户下载安装的安装包
+- `app.tar.gz` + `app.tar.gz.sig` — 自动更新增量包 + 签名
 - `latest.json` — updater manifest
 
-## LLM endpoint
+## LLM 端点配置
 
-The app talks to an OpenAI-compatible endpoint. Tested with:
+应用通过 OpenAI 兼容 HTTP 协议跟本地 LLM 对话。已验证可用：
 
-- vLLM (`--allowed-origins='*'` for CORS)
-- Ollama (works on `localhost` by default)
-- sglang
-- LM Studio
+- **vLLM**（启动时加 `--allowed-origins='*'` 放开 CORS）
+- **Ollama**（localhost 默认放开 CORS）
+- **sglang**
+- **LM Studio**
 
-Open `Settings` → `[ llm endpoint ]`, type your base URL (e.g. `http://localhost:8000/v1`), click **测试连接 / 加载模型**, then bind models to roles (chat / reasoning / embedding / image).
+进入 `Settings` → `[ llm endpoint ]`，填 base URL（如 `http://localhost:8000/v1`），点击「测试连接 / 加载模型」，然后给各角色绑模型（对话 / 推理 / 嵌入 / 生图）。
 
-## License
+## 许可
 
 MIT
