@@ -110,23 +110,6 @@ fn search_text(root: String, query: String) -> Vec<SearchHit> {
     hits
 }
 
-#[cfg(target_os = "macos")]
-fn disable_macos_fullscreen_mode(ns_window: *mut std::ffi::c_void) {
-    use objc2::msg_send;
-    use objc2::runtime::AnyObject;
-    if ns_window.is_null() {
-        return;
-    }
-    let obj = ns_window as *mut AnyObject;
-    unsafe {
-        // NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7
-        // NSWindowCollectionBehaviorFullScreenNone    = 1 << 9
-        let current: u64 = msg_send![obj, collectionBehavior];
-        let new_behavior: u64 = (current & !(1u64 << 7)) | (1u64 << 9);
-        let _: () = msg_send![obj, setCollectionBehavior: new_behavior];
-    }
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -143,18 +126,6 @@ pub fn run() {
             link_graph::list_md_files_meta,
             link_graph::git_status,
         ])
-        .setup(|_app| {
-            #[cfg(target_os = "macos")]
-            {
-                use tauri::Manager;
-                if let Some(window) = _app.get_webview_window("main") {
-                    if let Ok(ns_window) = window.ns_window() {
-                        disable_macos_fullscreen_mode(ns_window);
-                    }
-                }
-            }
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

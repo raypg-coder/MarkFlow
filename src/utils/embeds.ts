@@ -121,6 +121,51 @@ function sniffMermaidByContent(code: string): boolean {
   return MERMAID_KEYWORDS.some((kw) => first.startsWith(kw));
 }
 
+/**
+ * Inject a `[ src ][ img ]` toggle in the top-right of a mermaid/svg block.
+ * Idempotent — safe to call on every render pass.
+ *
+ * The actual show/hide of editor vs preview is done in CSS via
+ *   [data-mf-view="preview"] .cm-editor { display: none }
+ *   [data-mf-view="code"]    > .mf-embed { display: none }
+ * with a :has(.cm-editor:focus-within) override that keeps the editor
+ * visible while the user is actively editing.
+ */
+function ensureEmbedToggle(block: HTMLElement) {
+  if (block.querySelector(":scope > .mf-embed-toggle")) return;
+
+  const toggle = document.createElement("div");
+  toggle.className = "mf-embed-toggle";
+  toggle.setAttribute("contenteditable", "false");
+  toggle.setAttribute("data-mf-skip", "true");
+
+  const makeBtn = (view: "code" | "preview", label: string, title: string) => {
+    const btn = document.createElement("button");
+    btn.className = "mf-embed-toggle-btn";
+    btn.setAttribute("data-mf-view", view);
+    btn.type = "button";
+    btn.title = title;
+    btn.textContent = label;
+    // Prevent ProseMirror from grabbing the mousedown (would steal focus / break click)
+    btn.addEventListener("mousedown", (e) => e.preventDefault());
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      block.dataset.mfView = view;
+      // If switching to preview while editor is focused, blur so CSS applies
+      if (view === "preview") {
+        const ae = document.activeElement as HTMLElement | null;
+        if (ae && block.contains(ae)) ae.blur();
+      }
+    });
+    return btn;
+  };
+
+  toggle.appendChild(makeBtn("code", "[ src ]", "切换为源码"));
+  toggle.appendChild(makeBtn("preview", "[ img ]", "切换为图片"));
+  block.appendChild(toggle);
+}
+
 function findCodeBlocks(root: HTMLElement): HTMLElement[] {
   const seen = new Set<HTMLElement>();
   const result: HTMLElement[] = [];
@@ -198,6 +243,12 @@ export function renderEmbeds(root: HTMLElement, filePath: string, theme: "light"
       preview.setAttribute("data-mf-skip", "true");
       block.appendChild(preview);
     }
+
+    // Mark block for view-switch CSS + ensure default view is "preview"
+    block.dataset.mfHasEmbed = "1";
+    if (!block.dataset.mfView) block.dataset.mfView = "preview";
+    ensureEmbedToggle(block);
+
     if (preview.dataset.code === code && preview.dataset.lang === lang) return;
     preview.dataset.code = code;
     preview.dataset.lang = lang;

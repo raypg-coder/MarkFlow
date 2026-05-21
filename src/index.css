@@ -664,6 +664,18 @@
   }
 }
 
+/* Update pill — subtle breathing accent glow, calmer than git-mod-flash */
+@keyframes update-pulse {
+  0%, 100% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 65%, transparent),
+      0 0 8px -1px color-mix(in oklab, var(--color-accent) 40%, transparent);
+  }
+}
+
 .cyber-card {
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent);
@@ -978,9 +990,9 @@
    that it doesn't compete with H1.
    ============================================================ */
 .md-doc-header {
-  max-width: 1240px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 22px clamp(24px, 5vw, 80px) 0;
+  padding: 22px clamp(24px, 5vw, 60px) 0;
   box-sizing: content-box;
   display: flex;
   align-items: center;
@@ -1048,135 +1060,87 @@
   --crepe-font-code: "SF Mono", "JetBrains Mono", Menlo, Monaco, monospace;
 }
 .milkdown .ProseMirror {
-  padding: 14px clamp(24px, 5vw, 80px) 120px;
-  max-width: 1240px;
+  padding: 18px clamp(24px, 5vw, 60px) 120px;
+  max-width: 760px;          /* ~75ch narrow column, iAWriter/Bear-style */
   margin: 0 auto;
   outline: none;
   min-height: 60vh;
-  font-family: var(--font-mono);
-  font-size: 14px;          /* mono needs smaller scale than sans */
-  line-height: 1.7;         /* and more vertical air */
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
   color: var(--color-text);
   caret-color: var(--color-accent);
   word-wrap: break-word;
-  font-feature-settings: "calt" 1, "ss01" 1, "ss02" 1, "ss03" 1;
+  font-feature-settings: "ss01" 1, "cv11" 1;
 }
 .milkdown .ProseMirror ::selection {
-  background: color-mix(in oklab, var(--color-accent-2, #00ffff) 22%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 22%, transparent);
 }
 
-/* ─── Headings — cyberpunk: white text, dual-neon gradient bar,
-       micro [hN] tag floating on the right ──────────────────────── */
+/* ─── Headings — single color, type-scale 1.25, fixed rem rhythm ──
+   Left accent bar on h1-h3 keeps the cyberpunk identity without the
+   gradient + hover-tag clutter. */
 .milkdown .ProseMirror h1,
 .milkdown .ProseMirror h2,
 .milkdown .ProseMirror h3,
 .milkdown .ProseMirror h4,
 .milkdown .ProseMirror h5,
 .milkdown .ProseMirror h6 {
-  position: relative;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-weight: 700;
   line-height: 1.3;
-  scroll-margin-top: 16px;
   color: var(--color-text);
-  letter-spacing: -0.01em;
-}
-
-/* h1-h3 get the dual-neon bar + [hN] micro tag */
-.milkdown .ProseMirror h1::after,
-.milkdown .ProseMirror h2::after,
-.milkdown .ProseMirror h3::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    var(--color-accent-2, #00ffff) 0%,
-    var(--color-accent-3, #ff2d92) 100%
-  );
-  border-radius: 1px;
-  box-shadow: 0 0 6px color-mix(in oklab, var(--color-accent-2, #00ffff) 30%, transparent);
-}
-.milkdown .ProseMirror h1::before,
-.milkdown .ProseMirror h2::before,
-.milkdown .ProseMirror h3::before {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
-  color: var(--color-accent-2, #00ffff);
-  font-size: 9.5px;
-  position: absolute;
-  top: 4px;
-  right: 0;
-  padding: 1px 5px;
-  border-radius: 2px;
-  background: color-mix(in oklab, var(--color-accent-2, #00ffff) 8%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent-2, #00ffff) 35%, transparent);
-  text-shadow: 0 0 4px color-mix(in oklab, var(--color-accent-2, #00ffff) 50%, transparent);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 200ms ease;
-}
-.milkdown .ProseMirror h1:hover::before,
-.milkdown .ProseMirror h2:hover::before,
-.milkdown .ProseMirror h3:hover::before {
-  opacity: 0.85;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 16px;
+  position: relative;
 }
 
 .milkdown .ProseMirror h1 {
-  font-size: 1.85em;
-  margin: 0.6em 0 0.45em;
-  padding-bottom: 0.32em;
-  line-height: 1.2;
+  font-size: 1.875rem;       /* 28.125px */
+  margin: 1.8rem 0 0.8rem;
+  padding-left: 0.7rem;
+  border-left: 3px solid var(--color-accent-3);
 }
-.milkdown .ProseMirror h1::before { content: "[h1]"; }
-.milkdown .ProseMirror h1::after { width: 64px; }
-.milkdown .ProseMirror h1:first-child { margin-top: 0.1em; }
+.milkdown .ProseMirror h1:first-child { margin-top: 0.2rem; }
 
 .milkdown .ProseMirror h2 {
-  font-size: 1.45em;
-  margin: 1em 0 0.4em;
-  padding-bottom: 0.28em;
+  font-size: 1.5rem;         /* 22.5px */
+  margin: 1.6rem 0 0.7rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--color-accent);
 }
-.milkdown .ProseMirror h2::before { content: "[h2]"; }
-.milkdown .ProseMirror h2::after { width: 48px; }
 
 .milkdown .ProseMirror h3 {
-  font-size: 1.2em;
-  margin: 0.9em 0 0.32em;
-  padding-bottom: 0.22em;
+  font-size: 1.2rem;         /* 18px */
+  margin: 1.3rem 0 0.55rem;
+  padding-left: 0.55rem;
+  border-left: 2px solid var(--color-border-strong);
 }
-.milkdown .ProseMirror h3::before { content: "[h3]"; }
-.milkdown .ProseMirror h3::after { width: 36px; }
 
-/* h4-h6 keep their hue but no bar — quieter hierarchy */
 .milkdown .ProseMirror h4 {
-  font-size: 1em;
-  font-weight: 600;
-  margin: 0.8em 0 0.25em;
-  color: var(--md-amber);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1.1rem 0 0.5rem;
 }
 .milkdown .ProseMirror h5 {
-  font-size: 0.92em;
-  font-weight: 600;
-  color: var(--md-rose);
-  margin: 0.7em 0 0.2em;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin: 1rem 0 0.45rem;
 }
 .milkdown .ProseMirror h6 {
-  font-size: 0.82em;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin: 0.6em 0 0.15em;
+  letter-spacing: 0.08em;
+  margin: 0.9rem 0 0.4rem;
   font-family: var(--font-mono);
 }
 
 /* ─── Body ───────────────────────────────────────────────────── */
 .milkdown .ProseMirror p {
-  margin: 0.6em 0;
+  margin: 0.65rem 0;
 }
 .milkdown .ProseMirror strong {
   font-weight: 700;
@@ -1186,7 +1150,7 @@
   font-style: italic;
 }
 .milkdown .ProseMirror mark {
-  background: color-mix(in oklab, var(--md-amber) 35%, transparent);
+  background: color-mix(in oklab, var(--md-amber) 28%, transparent);
   color: var(--color-text);
   padding: 0 3px;
   border-radius: 3px;
@@ -1196,42 +1160,37 @@
 .milkdown .ProseMirror del,
 .milkdown .ProseMirror s {
   color: var(--color-text-muted);
-  text-decoration-color: var(--md-rose);
+  text-decoration-color: var(--color-text-subtle);
   text-decoration-thickness: 1.5px;
 }
 
-/* ─── Inline code — cyber chip: cyan text on faint cyan tint ── */
+/* ─── Inline code — calm gray chip, accent text ─────────────── */
 .milkdown .ProseMirror code:not(pre code) {
-  background: color-mix(in oklab, var(--color-accent-2, #00ffff) 8%, transparent);
-  padding: 0.18em 0.45em;
+  background: var(--color-bg-muted);
+  padding: 0.15em 0.4em;
   border-radius: 3px;
   font-family: var(--font-mono);
   font-feature-settings: "calt" 1;
   font-size: 0.86em;
-  color: var(--color-accent-2, #00ffff);
-  border: 1px solid color-mix(in oklab, var(--color-accent-2, #00ffff) 22%, transparent);
+  color: var(--color-accent-3);
   white-space: break-spaces;
-  font-weight: 500;
 }
 
-/* ─── Code blocks — translucent pod, 1px cyan border, ligatures on ── */
+/* ─── Code blocks — faint border, no glow ────────────────────── */
 .milkdown .ProseMirror pre,
 .md-fallback-content pre {
-  background: color-mix(in oklab, var(--code-bg) 92%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-accent-2, #00ffff) 30%, transparent);
+  background: var(--code-bg);
+  border: 1px solid var(--color-border);
   padding: 14px 18px;
   border-radius: 6px;
   overflow-x: auto;
   font-family: var(--font-mono);
-  font-size: 0.86em;
+  font-size: 13px;
   line-height: 1.65;
-  margin: 1em 0;
-  font-feature-settings: "calt" 1, "ss01" 1, "ss02" 1, "ss03" 1; /* Fira Code ligatures */
+  margin: 1.1rem 0;
+  font-feature-settings: "calt" 1;
   tab-size: 2;
   -moz-tab-size: 2;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--color-accent-2, #00ffff) 12%, transparent),
-    0 0 18px -10px color-mix(in oklab, var(--color-accent-2, #00ffff) 45%, transparent);
 }
 .milkdown .ProseMirror pre code,
 .md-fallback-content pre code {
@@ -1241,17 +1200,16 @@
   font-size: 1em;
 }
 
-/* Crepe wrapped code block — translucent pod with cyan border + mac dots */
+/* Crepe wrapped code block — keep mac dots; drop cyan glow */
 .milkdown .milkdown-code-block {
   display: block;
   position: relative;
-  background: color-mix(in oklab, var(--code-bg) 92%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-accent-2, #00ffff) 30%, transparent);
-  border-radius: 4px;
-  margin: 1em 0;
+  background: var(--code-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin: 1.1rem 0;
   overflow: hidden;
   font-family: var(--font-mono);
-  box-shadow: 0 0 18px -10px color-mix(in oklab, var(--color-accent-2, #00ffff) 45%, transparent);
   padding-top: 4px;
 }
 /* 3 small monochrome cyan ring dots top-right (Mac traffic-lights, deconstructed) */
@@ -1455,34 +1413,22 @@
   text-decoration: underline wavy;
 }
 
-/* ─── Blockquote — solid laser-pink rail + 5% magenta tint ──── */
+/* ─── Blockquote — subtle gray rail, muted text, no tint ─────── */
 .milkdown .ProseMirror blockquote {
   position: relative;
-  border-left: none;
-  background: color-mix(in oklab, var(--color-accent-3, #ff2d92) 5%, transparent);
-  padding: 0.5em 0.95em 0.5em 1.1em;
-  margin: 0.8em 0;
-  color: var(--color-text);
+  border-left: 3px solid var(--color-border-strong);
+  background: transparent;
+  padding: 0.1rem 0 0.1rem 1rem;
+  margin: 1rem 0;
+  color: var(--color-text-muted);
   font-style: normal;
-  border-radius: 0 4px 4px 0;
-}
-.milkdown .ProseMirror blockquote::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-accent-3, #ff2d92);
-  box-shadow:
-    0 0 6px var(--color-accent-3, #ff2d92),
-    0 0 14px color-mix(in oklab, var(--color-accent-3, #ff2d92) 35%, transparent);
+  border-radius: 0;
 }
 .milkdown .ProseMirror blockquote::before {
   display: none;
 }
 .milkdown .ProseMirror blockquote p {
-  margin: 0.3em 0;
+  margin: 0.4rem 0;
 }
 .milkdown .ProseMirror blockquote > :first-child {
   margin-top: 0;
@@ -1491,11 +1437,11 @@
   margin-bottom: 0;
 }
 
-/* ─── Lists — colored markers ────────────────────────────────── */
+/* ─── Lists — default marker color, rem rhythm ──────────────── */
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
-  padding-left: 1.7em;
-  margin: 0.5em 0;
+  padding-left: 1.6rem;
+  margin: 0.6rem 0;
 }
 .milkdown .ProseMirror ul {
   list-style: disc;
@@ -1504,24 +1450,24 @@
   list-style: decimal;
 }
 .milkdown .ProseMirror li {
-  margin: 0.2em 0;
+  margin: 0.25rem 0;
 }
 .milkdown .ProseMirror ul li::marker {
-  color: var(--md-teal);
+  color: var(--color-text-subtle);
 }
 .milkdown .ProseMirror ol li::marker {
-  color: var(--md-amber);
+  color: var(--color-text-muted);
   font-feature-settings: "tnum";
-  font-weight: 600;
+  font-weight: 500;
 }
 .milkdown .ProseMirror li > p {
-  margin: 0.2em 0;
+  margin: 0.25rem 0;
 }
 .milkdown .ProseMirror ul ul,
 .milkdown .ProseMirror ol ol,
 .milkdown .ProseMirror ul ol,
 .milkdown .ProseMirror ol ul {
-  margin: 0.2em 0;
+  margin: 0.25rem 0;
 }
 
 /* Task list */
@@ -1561,11 +1507,14 @@
 /* ─── Links ──────────────────────────────────────────────────── */
 .milkdown .ProseMirror a {
   color: var(--color-accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--color-accent) 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 120ms ease;
 }
 .milkdown .ProseMirror a:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-color: var(--color-accent);
 }
 
 /* ─── Wikilink decoration — [[name]] inside the editor ───────── */
@@ -1674,11 +1623,11 @@
   padding: 1px 5px;
 }
 
-/* ─── HR — three accent dots ─────────────────────────────────── */
+/* ─── HR — three muted dots ──────────────────────────────────── */
 .milkdown .ProseMirror hr {
   border: none;
-  height: 18px;
-  margin: 1.5em 0;
+  height: 16px;
+  margin: 1.6rem 0;
   padding: 0;
   background: none;
   text-align: center;
@@ -1686,11 +1635,10 @@
 }
 .milkdown .ProseMirror hr::before {
   content: "·  ·  ·";
-  color: var(--color-accent);
+  color: var(--color-text-subtle);
   letter-spacing: 0.45em;
   font-size: 1.3em;
-  line-height: 18px;
-  opacity: 0.55;
+  line-height: 16px;
 }
 
 /* Images */
@@ -1834,7 +1782,7 @@ milkdown-toolbar button.active,
    ============================================================ */
 .mf-embed {
   margin-top: 6px;
-  padding: 12px;
+  padding: 14px 16px 16px;
   background: var(--color-bg);
   border-top: 1px dashed var(--color-border);
   text-align: center;
@@ -1855,6 +1803,63 @@ milkdown-toolbar button.active,
   border-radius: 6px;
 }
 
+/* ─── Embed view toggle — [ src ][ img ] segmented button ─────
+   Sits top-right of any mermaid/svg block. Hides the mac dots
+   for these blocks (different context — diagrams, not terminal). */
+.milkdown .milkdown-code-block[data-mf-has-embed]::before {
+  display: none;
+}
+.milkdown .milkdown-code-block .mf-embed-toggle {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  display: flex;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  z-index: 5;
+  user-select: none;
+}
+.milkdown .milkdown-code-block .mf-embed-toggle-btn {
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-subtle);
+  font: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+.milkdown .milkdown-code-block .mf-embed-toggle-btn:hover {
+  color: var(--color-text-muted);
+  background: color-mix(in oklab, var(--color-text) 5%, transparent);
+}
+.milkdown .milkdown-code-block[data-mf-view="code"] .mf-embed-toggle-btn[data-mf-view="code"],
+.milkdown .milkdown-code-block[data-mf-view="preview"] .mf-embed-toggle-btn[data-mf-view="preview"] {
+  color: var(--color-accent);
+  border-color: color-mix(in oklab, var(--color-accent) 35%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 10%, transparent);
+}
+
+/* ─── Visibility rules — show exactly one at a time ─────────── */
+.milkdown .milkdown-code-block[data-mf-has-embed][data-mf-view="preview"] .cm-editor {
+  display: none;
+}
+.milkdown .milkdown-code-block[data-mf-has-embed][data-mf-view="code"] > .mf-embed {
+  display: none;
+}
+/* Override: while user is actively typing in the code editor, force-show
+   the editor regardless of mode. Critical for the slash-menu insert flow
+   where Crepe auto-focuses the new block — without this, preview default
+   would hide the editor mid-typing. Blur → preview re-appears. */
+.milkdown .milkdown-code-block[data-mf-has-embed]:has(.cm-editor:focus-within) .cm-editor {
+  display: block !important;
+}
+.milkdown .milkdown-code-block[data-mf-has-embed]:has(.cm-editor:focus-within) > .mf-embed {
+  display: none !important;
+}
+
 /* ============================================================
    Read-only fallback for documents Crepe can't parse
    ============================================================ */
@@ -1863,9 +1868,9 @@ milkdown-toolbar button.active,
   font-weight: 600;
 }
 .md-fallback-wrap {
-  max-width: 1240px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 14px clamp(24px, 5vw, 80px) 120px;
+  padding: 18px clamp(24px, 5vw, 60px) 120px;
   box-sizing: content-box;
 }
 .md-fallback-banner {

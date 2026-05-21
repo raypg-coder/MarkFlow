@@ -1,10 +1,10 @@
 import { useStore } from "../store";
 import { AudioControl } from "./AudioControl";
+import { downloadAndInstall, restartApp, type UpdateState } from "../utils/updater";
 
 export function StatusBar() {
-  const { openFiles, activePath, appVersion, updateState } = useStore();
+  const { openFiles, activePath, appVersion, updateState, setUpdateState } = useStore();
   const file = openFiles.find((f) => f.path === activePath);
-  const updatePending = updateState.kind === "available" || updateState.kind === "ready";
 
   if (!file) {
     return (
@@ -13,8 +13,10 @@ export function StatusBar() {
         <span className="geek-label">idle</span>
         <span className="flex-1" />
         <span className="text-[var(--chrome-text-subtle)] font-mono">markflow</span>
-        <span className="mx-2 text-[var(--chrome-text-subtle)] font-mono">│</span>
+        <Sep />
         <AudioControl />
+        <Sep />
+        <UpdatePill appVersion={appVersion} state={updateState} setState={setUpdateState} />
       </div>
     );
   }
@@ -56,21 +58,104 @@ export function StatusBar() {
       <Sep />
       <AudioControl />
       <Sep />
-      <span
-        className={`font-mono text-[10px] ${
-          updatePending
-            ? "text-[var(--color-accent)]"
-            : "text-[var(--chrome-text-subtle)]"
-        }`}
-        title={updatePending ? "有新版本可用" : `MarkFlow v${appVersion}`}
-      >
-        v{appVersion}
-        {updatePending && <span className="ml-1">↑</span>}
-      </span>
+      <UpdatePill appVersion={appVersion} state={updateState} setState={setUpdateState} />
     </div>
   );
 }
 
 function Sep() {
   return <span className="text-[var(--chrome-text-subtle)] mx-2 font-mono">│</span>;
+}
+
+/**
+ * Version pill — clickable when an update is available.
+ *
+ *  uptodate / idle / error : `v0.1.0`            (muted, non-interactive)
+ *  available               : `v0.1.0 → v0.2.0 ↓` (accent + pulse, click → download)
+ *  downloading             : `↓ 45%`              (accent, live progress)
+ *  ready                   : `↻ restart`          (accent + pulse, click → relaunch)
+ */
+function UpdatePill({
+  appVersion,
+  state,
+  setState,
+}: {
+  appVersion: string;
+  state: UpdateState;
+  setState: (s: UpdateState) => void;
+}) {
+  if (state.kind === "available") {
+    const info = state.info;
+    const onClick = async () => {
+      setState({ kind: "downloading", info, downloaded: 0, total: 0 });
+      try {
+        await downloadAndInstall((done, total) => {
+          setState({ kind: "downloading", info, downloaded: done, total });
+        });
+        setState({ kind: "ready", info });
+      } catch (e: any) {
+        setState({ kind: "error", message: String(e?.message ?? e) });
+      }
+    };
+    return (
+      <button
+        onClick={onClick}
+        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-sm text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
+        title={`新版本 v${info.version} 可用 — 点击下载并安装`}
+        style={{
+          animation: "update-pulse 2s ease-in-out infinite",
+          boxShadow: "inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 35%, transparent)",
+        }}
+      >
+        v{appVersion}
+        <span className="mx-1 opacity-60">→</span>
+        v{info.version}
+        <span className="ml-1">↓</span>
+      </button>
+    );
+  }
+
+  if (state.kind === "downloading") {
+    const pct = state.total > 0 ? Math.floor((state.downloaded / state.total) * 100) : 0;
+    return (
+      <span
+        className="font-mono text-[10px] text-[var(--color-accent)] px-1.5"
+        title={`正在下载 v${state.info.version}…`}
+      >
+        ↓ {pct}%
+      </span>
+    );
+  }
+
+  if (state.kind === "ready") {
+    return (
+      <button
+        onClick={() => restartApp().catch(() => {})}
+        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-sm text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
+        title={`v${state.info.version} 已就绪 — 点击重启应用`}
+        style={{
+          animation: "update-pulse 1.6s ease-in-out infinite",
+          boxShadow: "inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 50%, transparent)",
+        }}
+      >
+        ↻ restart
+      </button>
+    );
+  }
+
+  // Default: idle / checking / uptodate / error → quiet version label
+  return (
+    <span
+      className="font-mono text-[10px] text-[var(--chrome-text-subtle)]"
+      title={
+        state.kind === "checking"
+          ? "正在检查更新…"
+          : state.kind === "error"
+          ? `更新检查失败：${state.message}`
+          : `MarkFlow v${appVersion}`
+      }
+    >
+      v{appVersion}
+    </span>
+  );
 }

@@ -6,11 +6,11 @@ export function TabBar() {
   const { openFiles, activePath, setActive, closeFile } = useStore();
 
   if (!openFiles.length) {
-    return <div className="flex-1" />;
+    return <div data-tauri-drag-region className="flex-1 self-stretch" />;
   }
 
   return (
-    <div className="flex items-end overflow-x-auto flex-1 min-w-0">
+    <div data-tauri-drag-region className="flex items-end overflow-x-auto flex-1 min-w-0">
       {openFiles.map((f, i) => {
         const dirty = f.content !== f.savedContent;
         const active = f.path === activePath;
@@ -58,7 +58,7 @@ export function TabBar() {
           </div>
         );
       })}
-      <div className="flex-1 min-w-0" />
+      <div data-tauri-drag-region className="flex-1 min-w-0 self-stretch" />
     </div>
   );
 }

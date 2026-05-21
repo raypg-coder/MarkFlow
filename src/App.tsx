@@ -437,7 +437,7 @@ function App() {
             </button>
           </div>
 
-          <div className="flex-1 min-w-0 flex items-end self-stretch">
+          <div data-tauri-drag-region className="flex-1 min-w-0 flex items-end self-stretch">
             <TabBar />
           </div>
 
