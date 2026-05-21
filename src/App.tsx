@@ -28,9 +28,13 @@ import { StatusBar } from "./components/StatusBar";
 import { Ribbon } from "./components/Ribbon";
 import { RightSidebar } from "./components/RightSidebar";
 import { SettingsModal } from "./components/SettingsModal";
+import { CloseDirtyDialog } from "./components/CloseDirtyDialog";
 import { generateAndSaveImage } from "./utils/image-gen";
 import { appVersion as fetchAppVersion, checkForUpdate } from "./utils/updater";
 import { exportMarkdownToHtml, exportMarkdownToPdf } from "./utils/export";
+import { setAutosaveImpl, flushAllAutosaves } from "./utils/autosave";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { isEditable } from "./utils/fileKind";
 
 function App() {
   const {
@@ -63,6 +67,11 @@ function App() {
   useEffect(() => {
     useStore.getState().restoreTrees();
     useStore.getState().loadVectorIndex();
+    // Crash recovery — restore any swap files left over from a previous
+    // unclean exit (app crash, force-quit, machine reboot, etc.).
+    useStore.getState().recoverSwaps().catch(() => {});
+    // Wire up the auto-save backend now that the store is available.
+    setAutosaveImpl((path) => useStore.getState().saveFile(path));
     // Fetch app version + silent background update check (best-effort)
     fetchAppVersion().then((v) => useStore.getState().setAppVersion(v)).catch(() => {});
     const t = setTimeout(async () => {
@@ -294,15 +303,49 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [saveActive, setSidebarView, toggleSidebar]);
 
+  // Window blur → flush all pending auto-save timers + immediately save
+  // any remaining dirty files. Covers the "user alt-tabs away then closes
+  // the laptop / OS sleeps" scenario where the 1s auto-save might not have
+  // fired yet. Active editor flushes first via markflow:flush-editor so the
+  // freshest onChange-debounced content gets into the store before save.
   useEffect(() => {
-    const file = openFiles.find((f) => f.path === activePath);
-    if (!file) return;
-    if (file.content === file.savedContent) return;
-    const t = setTimeout(() => {
-      useStore.getState().saveFile(file.path).catch(console.error);
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [openFiles, activePath]);
+    const onBlur = () => {
+      window.dispatchEvent(new Event("markflow:flush-editor"));
+      flushAllAutosaves();
+      useStore.getState().saveAllDirty().catch(() => {});
+    };
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, []);
+
+  // Native drag-drop: dropping .md / .txt / .json etc. files onto the window
+  // opens them in new tabs. Tauri 2 routes OS-level drag events through
+  // the webview window's onDragDropEvent API.
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    (async () => {
+      try {
+        const win = getCurrentWebviewWindow();
+        unlisten = await win.onDragDropEvent((event) => {
+          if (event.payload.type !== "drop") return;
+          const paths = event.payload.paths || [];
+          for (const p of paths) {
+            const name = p.split(/[\\/]/).pop() || p;
+            // Skip unknown extensions — only open files our editor can render
+            if (!isEditable(name)) continue;
+            useStore.getState().openFile(p, name).catch((e) => {
+              console.warn("[drop] openFile failed", p, e);
+            });
+          }
+        });
+      } catch (e) {
+        console.warn("[drop] listener setup failed", e);
+      }
+    })();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -620,6 +663,7 @@ function App() {
       </div>
 
       <SettingsModal />
+      <CloseDirtyDialog />
       <ImageGenToast />
       <div className="focus-mode-indicator" />
     </div>

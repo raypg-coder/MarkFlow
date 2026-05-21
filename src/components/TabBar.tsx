@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { useStore } from "../store";
 
 export function TabBar() {
-  const { openFiles, activePath, setActive, closeFile } = useStore();
+  const { openFiles, activePath, setActive, requestCloseFile } = useStore();
 
   if (!openFiles.length) {
     return <div data-tauri-drag-region className="flex-1 self-stretch" />;
@@ -36,8 +36,7 @@ export function TabBar() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (dirty && !confirm(`${f.name} 有未保存修改，确定关闭？`)) return;
-                closeFile(f.path);
+                requestCloseFile(f.path);
               }}
               className={clsx(
                 "rounded w-4 h-4 flex items-center justify-center shrink-0 transition-opacity",

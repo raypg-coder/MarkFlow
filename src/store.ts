@@ -6,6 +6,8 @@ import type { FileNode, OpenFile, SearchHit, Backlink, LinkGraph, RightSidebarVi
 import { detectKind } from "./utils/fileKind";
 import { loadLLMSettings, saveLLMSettings, embed, type LLMSettings, type ChatMessage } from "./utils/llm";
 import type { UpdateState } from "./utils/updater";
+import { scheduleSwap, cancelSwap, deleteSwap, loadAllSwaps } from "./utils/swap";
+import { scheduleAutosave, cancelAutosave } from "./utils/autosave";
 import {
   loadIndex,
   clearIndex,
@@ -58,6 +60,8 @@ interface State {
   semanticQuery: string;
   semanticResults: ScoredHit[];
   semanticSearching: boolean;
+  closeDirtyPath: string | null;       // path of file pending close-confirm
+  recoveredOnceAt: number | null;       // timestamp when swap recovery ran (gates restoreTrees ordering)
 
   addFolder: () => Promise<void>;
   removeFolder: (rootPath: string) => void;
@@ -68,9 +72,13 @@ interface State {
   toggleExpand: (path: string) => void;
   openFile: (path: string, name: string) => Promise<void>;
   closeFile: (path: string) => void;
+  requestCloseFile: (path: string) => void;     // dirty-aware close (prompts on dirty)
+  setCloseDirtyPath: (path: string | null) => void;
   setContent: (path: string, content: string) => void;
   saveFile: (path: string) => Promise<void>;
   saveActive: () => Promise<void>;
+  saveAllDirty: () => Promise<void>;
+  recoverSwaps: () => Promise<void>;
   setActive: (path: string) => void;
   collapseAll: () => void;
   navBack: () => void;
@@ -212,6 +220,8 @@ export const useStore = create<State>((set, get) => ({
   semanticQuery: "",
   semanticResults: [],
   semanticSearching: false,
+  closeDirtyPath: null,
+  recoveredOnceAt: null,
 
   addFolder: async () => {
     const picked = await open({ directory: true, multiple: false });
@@ -315,6 +325,14 @@ export const useStore = create<State>((set, get) => ({
   },
 
   closeFile: (path) => {
+    // Cancel pending auto-save + swap timers, and remove any existing swap.
+    // Caller is responsible for prompting the user about unsaved content
+    // BEFORE calling closeFile — by the time we get here, the user has
+    // confirmed they want to discard (or there's nothing dirty).
+    cancelAutosave(path);
+    cancelSwap(path);
+    deleteSwap(path).catch(() => {});
+
     const files = get().openFiles.filter((f) => f.path !== path);
     // Strip from history; collapse consecutive duplicates after filtering
     let history = get().history.filter((p) => p !== path);
@@ -333,6 +351,19 @@ export const useStore = create<State>((set, get) => ({
       f.path === path ? { ...f, content } : f,
     );
     set({ openFiles: files });
+
+    // Auto-save 1s after last edit; swap snapshot 5s after last edit.
+    // Both no-op cheaply when content === savedContent (saveFile early-returns).
+    const f = files.find((x) => x.path === path);
+    if (f && f.content !== f.savedContent) {
+      scheduleAutosave(path);
+      scheduleSwap(path, () => {
+        // Read fresh from store at the moment the timer fires — handles the
+        // case where the user kept typing between schedule and fire.
+        const cur = useStore.getState().openFiles.find((x) => x.path === path);
+        return cur && cur.content !== cur.savedContent ? cur.content : null;
+      });
+    }
   },
 
   saveFile: async (path) => {
@@ -344,6 +375,10 @@ export const useStore = create<State>((set, get) => ({
       x.path === path ? { ...x, savedContent: x.content } : x,
     );
     set({ openFiles: files, savingPath: path });
+    // Once successfully persisted, the swap is no longer needed — drop it.
+    cancelAutosave(path);
+    cancelSwap(path);
+    deleteSwap(path).catch(() => {});
     // Clear beam state after the CSS animation finishes (matches .saving-beam: 700ms)
     setTimeout(() => {
       if (get().savingPath === path) set({ savingPath: null });
@@ -355,6 +390,77 @@ export const useStore = create<State>((set, get) => ({
   saveActive: async () => {
     const p = get().activePath;
     if (p) await get().saveFile(p);
+  },
+
+  saveAllDirty: async () => {
+    const dirty = get().openFiles.filter((f) => f.content !== f.savedContent);
+    await Promise.all(dirty.map((f) => get().saveFile(f.path).catch(() => {})));
+  },
+
+  requestCloseFile: (path) => {
+    const f = get().openFiles.find((x) => x.path === path);
+    if (!f) return;
+    if (f.content !== f.savedContent) {
+      // Defer the actual close to user choice in the modal
+      set({ closeDirtyPath: path });
+    } else {
+      get().closeFile(path);
+    }
+  },
+
+  setCloseDirtyPath: (path) => set({ closeDirtyPath: path }),
+
+  recoverSwaps: async () => {
+    if (get().recoveredOnceAt) return;        // run at most once per session
+    set({ recoveredOnceAt: Date.now() });
+    const swaps = await loadAllSwaps();
+    if (!swaps.length) return;
+    // For each recovered entry, open the original path (loads disk content
+    // as savedContent baseline) then overlay the swap content as the live
+    // dirty buffer. User can save (writes recovered content, deletes swap)
+    // or close (keeps swap for next launch — discard only via explicit save).
+    for (const swap of swaps) {
+      try {
+        const name = swap.originalPath.split(/[\\/]/).pop() || swap.originalPath;
+        // Read disk for the savedContent baseline. If disk read fails,
+        // treat swap content as both saved and current — file may have been
+        // deleted externally; user can save it back.
+        let savedBaseline: string;
+        try {
+          savedBaseline = await readTextFile(swap.originalPath);
+        } catch {
+          savedBaseline = swap.content;
+        }
+        // If swap matches disk, the swap is stale (user saved via another
+        // means since last swap write). Just delete it and skip.
+        if (savedBaseline === swap.content) {
+          await deleteSwap(swap.originalPath);
+          continue;
+        }
+        const existing = get().openFiles.find((f) => f.path === swap.originalPath);
+        if (existing) {
+          // Already open (unusual — startup races). Overlay swap content.
+          set({
+            openFiles: get().openFiles.map((f) =>
+              f.path === swap.originalPath
+                ? { ...f, content: swap.content, savedContent: savedBaseline }
+                : f,
+            ),
+          });
+        } else {
+          const f: OpenFile = {
+            path: swap.originalPath,
+            name,
+            content: swap.content,
+            savedContent: savedBaseline,
+            kind: detectKind(name),
+          };
+          set({ openFiles: [...get().openFiles, f] });
+        }
+      } catch (e) {
+        console.warn("[recoverSwaps] entry failed", swap.originalPath, e);
+      }
+    }
   },
 
   setActive: (path) => {
