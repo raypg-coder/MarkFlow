@@ -1,8 +1,11 @@
-import { marked } from "marked";
-// @ts-expect-error no types
-import html2pdf from "html2pdf.js";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+
+// marked + html2pdf are large (~250KB combined) and only used when the user
+// explicitly exports. Dynamic import keeps them out of the main bundle.
+const getMarked = () => import("marked").then((m) => m.marked);
+// @ts-expect-error no types
+const getHtml2Pdf = () => import("html2pdf.js").then((m) => m.default);
 
 const exportCss = `
 body{font-family:-apple-system,system-ui,sans-serif;max-width:820px;margin:48px auto;padding:0 24px;line-height:1.75;color:#1f1f23;}
@@ -30,11 +33,14 @@ export async function exportMarkdownToHtml(name: string, content: string) {
     filters: [{ name: "HTML", extensions: ["html"] }],
   });
   if (!path) return;
+  const marked = await getMarked();
   const body = await marked.parse(content);
   await writeTextFile(path, fullHtml(name, body as string));
 }
 
 export async function exportMarkdownToPdf(name: string, content: string) {
+  const marked = await getMarked();
+  const html2pdf = await getHtml2Pdf();
   const body = await marked.parse(content);
   const host = document.createElement("div");
   host.style.cssText = "position:fixed;left:-9999px;top:0;width:820px;background:#fff;";

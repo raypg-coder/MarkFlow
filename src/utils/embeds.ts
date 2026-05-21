@@ -1,18 +1,52 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import mermaid from "mermaid";
 
+// ─── Mermaid lazy loader ────────────────────────────────────
+// Mermaid + its diagram-type chunks are ~500KB gzipped — making it the
+// single largest contributor to the main bundle. Most documents don't have
+// mermaid blocks at all. Dynamic import shaves ~25% off the main bundle
+// (3.5MB → 2.6MB) at the cost of one extra network/disk fetch the first
+// time a mermaid block is encountered.
+type MermaidModule = typeof import("mermaid").default;
+let mermaidPromise: Promise<MermaidModule> | null = null;
 let mermaidInitialized = false;
+let mermaidPendingDark = false;
 let mermaidSeq = 0;
 
+async function getMermaid(): Promise<MermaidModule> {
+  if (!mermaidPromise) {
+    mermaidPromise = import("mermaid").then((m) => m.default);
+  }
+  const mm = await mermaidPromise;
+  if (!mermaidInitialized) {
+    mm.initialize({
+      startOnLoad: false,
+      theme: mermaidPendingDark ? "dark" : "neutral",
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+      securityLevel: "loose",
+      flowchart: { htmlLabels: true, curve: "basis" },
+    });
+    mermaidInitialized = true;
+  }
+  return mm;
+}
+
 function initMermaid(dark: boolean) {
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: dark ? "dark" : "neutral",
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
-    securityLevel: "loose",
-    flowchart: { htmlLabels: true, curve: "basis" },
-  });
-  mermaidInitialized = true;
+  // If mermaid is already loaded, re-initialize with new theme immediately.
+  // If it hasn't loaded yet, just remember the desired theme; getMermaid()
+  // will pick it up the first time it actually loads.
+  mermaidPendingDark = dark;
+  if (mermaidPromise) {
+    mermaidPromise.then((mm) => {
+      mm.initialize({
+        startOnLoad: false,
+        theme: dark ? "dark" : "neutral",
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+        securityLevel: "loose",
+        flowchart: { htmlLabels: true, curve: "basis" },
+      });
+      mermaidInitialized = true;
+    });
+  }
 }
 
 function dirname(p: string): string {
@@ -295,8 +329,8 @@ function pumpQueue() {
     return;
   }
   const id = `mf-mm-${++mermaidSeq}`;
-  mermaid
-    .render(id, code)
+  getMermaid()
+    .then((mm) => mm.render(id, code))
     .then(({ svg }) => {
       if (preview.dataset.code === code) preview.innerHTML = svg;
     })
@@ -370,7 +404,8 @@ export async function renderFallbackEmbeds(
     // mermaid
     const id = `mf-fb-mm-${++mermaidSeq}`;
     try {
-      const { svg } = await mermaid.render(id, source);
+      const mm = await getMermaid();
+      const { svg } = await mm.render(id, source);
       const wrapper = document.createElement("div");
       wrapper.className = "mf-embed-fallback";
       wrapper.innerHTML = svg;

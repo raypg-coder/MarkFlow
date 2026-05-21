@@ -4,7 +4,9 @@ import { editorViewCtx } from "@milkdown/kit/core";
 import { replaceAll } from "@milkdown/utils";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
-import { marked } from "marked";
+// marked is only used on the rare Crepe-parse-failure fallback path.
+// Dynamic import keeps its ~50KB out of the main bundle for the 99% case.
+const getMarked = () => import("marked").then((m) => m.marked);
 import { useStore } from "../store";
 import { renderEmbeds, reinitMermaidTheme, renderFallbackEmbeds } from "../utils/embeds";
 import { sanitizeForCrepe } from "../utils/sanitize";
@@ -262,6 +264,7 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
       .catch(async (err) => {
         console.error("[MarkdownEditor] Crepe failed:", filePath, err);
         try {
+          const marked = await getMarked();
           const html = await marked.parse(value);
           setFallback({ html: html as string, error: String(err?.message || err) });
         } catch (e2) {
@@ -319,6 +322,7 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
         // read-only HTML for this file. Crepe stays alive for next file.
         (async () => {
           try {
+            const marked = await getMarked();
             const html = await marked.parse(value);
             setFallback({ html: html as string, error: String((err as Error)?.message || err) });
           } catch {
