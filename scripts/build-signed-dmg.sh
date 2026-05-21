@@ -48,8 +48,20 @@ fi
 echo "✓ 找到 updater 私钥"
 
 # ─── 3. tauri build ──────────────────────────────────────────
-echo "→ tauri build (首次 5-15 分钟, 含 .app 公证)"
+# Tauri 内嵌的 Swift S3 client 公证 .app 时容易在 Apple notary S3 上传
+# 这一步死锁 (HTTPClientError.deadlineExceeded, completedParts: [])。
+# 解决：暂时清空 Apple 凭据 env vars → Tauri 跳过 .app 公证，只签名。
+# 公证留给下面的 xcrun notarytool 单独跑 .dmg (用 Apple 原生上传器，稳)。
+# 这样 .dmg ticket stapled 后 Gatekeeper 首次挂载即放行 — 符合 Apple 推荐分发流程。
+echo "→ tauri build (签名 .app + .dmg, 跳过 Tauri 内嵌公证)"
+_BAK_APPLE_ID="$APPLE_ID"
+_BAK_APPLE_PASSWORD="$APPLE_PASSWORD"
+_BAK_APPLE_TEAM_ID="$APPLE_TEAM_ID"
+unset APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
 npx tauri build
+export APPLE_ID="$_BAK_APPLE_ID"
+export APPLE_PASSWORD="$_BAK_APPLE_PASSWORD"
+export APPLE_TEAM_ID="$_BAK_APPLE_TEAM_ID"
 
 # ─── 4. 给 dmg 信封单独 notarize + staple ────────────────────
 DMG=$(find src-tauri/target/release/bundle/dmg -name "*.dmg" -print -quit 2>/dev/null || true)

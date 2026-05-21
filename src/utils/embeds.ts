@@ -220,12 +220,22 @@ export function renderEmbeds(root: HTMLElement, filePath: string, theme: "light"
   // ─── 2. Mermaid + SVG code blocks ────────────────────────────
   findCodeBlocks(root).forEach((block) => {
     let lang = getCodeBlockLang(block);
+
+    // Fast path: if the block has a known non-embed language (js / python /
+    // bash / etc.), skip the expensive text extraction entirely. In long docs
+    // 95% of code blocks are plain code — this is the hot path.
+    if (lang && lang !== "mermaid" && lang !== "svg") {
+      const stale = block.querySelector(":scope > .mf-embed");
+      if (stale) stale.remove();
+      return;
+    }
+
     const code = getCodeBlockText(block);
     if (!code.trim()) return;
 
     // Content-sniff fallback: detect mermaid by first-line keyword when
     // language metadata isn't reliably exposed by Crepe.
-    if (!lang || (lang !== "mermaid" && lang !== "svg")) {
+    if (!lang) {
       if (sniffMermaidByContent(code)) lang = "mermaid";
     }
 

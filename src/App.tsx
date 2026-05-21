@@ -262,6 +262,9 @@ function App() {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key === "s") {
         e.preventDefault();
+        // Flush any pending editor content (onChange is debounced 150ms)
+        // so save reads the freshest markdown, not a stale value.
+        window.dispatchEvent(new Event("markflow:flush-editor"));
         saveActive();
       }
       if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
@@ -443,7 +446,10 @@ function App() {
 
           <div className="flex items-center self-stretch gap-0.5 px-2">
             <button
-              onClick={() => saveActive()}
+              onClick={() => {
+                window.dispatchEvent(new Event("markflow:flush-editor"));
+                saveActive();
+              }}
               title="保存 (⌘S)"
               disabled={!canSave}
               className={`p-1.5 rounded-sm ${

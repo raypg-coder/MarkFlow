@@ -39,14 +39,44 @@ function findWikilinkDecos(doc: PMNode): DecorationSet {
 
 const wikilinkKey = new PluginKey("mf-wikilink");
 
+/**
+ * Cheap pre-check: does this transaction insert or delete bracket chars?
+ * If not, we can safely re-map the existing decoration set forward through
+ * the transaction without re-walking the whole doc. For typical typing
+ * (letters, numbers, punctuation that isn't [ or ]), this skips an O(n)
+ * doc.descendants() walk per keystroke — huge win in long documents.
+ */
+function transactionTouchesBrackets(tr: import("@milkdown/prose/state").Transaction): boolean {
+  for (const step of tr.steps as any[]) {
+    const slice = step.slice;
+    if (!slice) continue;
+    let found = false;
+    slice.content.descendants((node: any) => {
+      if (found) return false;
+      if (node.isText && /[\[\]]/.test(node.text || "")) {
+        found = true;
+        return false;
+      }
+      return true;
+    });
+    if (found) return true;
+  }
+  return false;
+}
+
 export const wikilinkPlugin = $prose(
   () =>
     new Plugin({
       key: wikilinkKey,
       state: {
         init: (_config, { doc }) => findWikilinkDecos(doc),
-        apply: (tr, old) =>
-          tr.docChanged ? findWikilinkDecos(tr.doc) : old,
+        apply: (tr, old) => {
+          if (!tr.docChanged) return old;
+          // Full rescan only when brackets are in play
+          if (transactionTouchesBrackets(tr)) return findWikilinkDecos(tr.doc);
+          // Fast path: map existing decoration positions forward
+          return old.map(tr.mapping, tr.doc);
+        },
       },
       props: {
         decorations(state) {

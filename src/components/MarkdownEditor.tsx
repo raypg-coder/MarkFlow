@@ -27,6 +27,10 @@ function enhanceCodeBlocks(root: HTMLElement) {
   const blocks = root.querySelectorAll<HTMLElement>(".milkdown-code-block");
   blocks.forEach((block) => {
     const code = block.querySelector(".cm-content")?.textContent ?? "";
+    // Skip the regex + DOM mutation if the code text hasn't changed since
+    // the last check. Saves a regex pass per block per render in long docs.
+    if (block.dataset.mfRunCheckCode === code) return;
+    block.dataset.mfRunCheckCode = code;
     const hasOutput = OUTPUT_RE.test(code);
     if (hasOutput) {
       block.dataset.hasOutput = "true";
@@ -159,22 +163,46 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
       console.warn("[MarkdownEditor] failed to register plugins", e);
     }
 
+    // Debounce onChange — markdown serialization + store update + word count
+    // are all O(n) on full doc. 150ms means a quick burst of typing only
+    // triggers ONE downstream update instead of one per keystroke.
+    let onChangeTimer: number | null = null;
+    let pendingMd: string | null = null;
+    const flushOnChange = () => {
+      if (onChangeTimer != null) {
+        clearTimeout(onChangeTimer);
+        onChangeTimer = null;
+      }
+      if (pendingMd != null) {
+        onChangeRef.current(pendingMd);
+        pendingMd = null;
+      }
+    };
+
     crepe.on((listener) => {
       listener.markdownUpdated((_ctx, md) => {
         lastEmittedRef.current = md;
-        onChangeRef.current(md);
+        pendingMd = md;
+        if (onChangeTimer != null) clearTimeout(onChangeTimer);
+        onChangeTimer = window.setTimeout(flushOnChange, 150);
       });
     });
 
-    let raf = 0;
+    // Debounce render-side work: renderEmbeds (full-doc querySelectorAll x3)
+    // + enhanceCodeBlocks (regex on every block) used to fire on every DOM
+    // mutation via rAF. For long docs this could fire 60Hz mid-typing and
+    // re-process every mermaid block. 200ms post-burst is the sweet spot —
+    // user can't perceive the delay but the work collapses by 30-50x.
+    let renderTimer: number | null = null;
     const scheduleRender = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
+      if (renderTimer != null) clearTimeout(renderTimer);
+      renderTimer = window.setTimeout(() => {
+        renderTimer = null;
         if (editorMountRef.current) {
           renderEmbeds(editorMountRef.current, filePath, theme);
           enhanceCodeBlocks(editorMountRef.current);
         }
-      });
+      }, 200);
     };
 
     const observer = new MutationObserver((muts) => {
@@ -185,6 +213,12 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
       });
       if (meaningful) scheduleRender();
     });
+
+    // Allow external triggers (e.g. ⌘S handler) to force-flush pending content
+    // before save. Without this, the 150ms onChange debounce could save a
+    // stale value if the user types and immediately hits save.
+    const flushListener = () => flushOnChange();
+    window.addEventListener("markflow:flush-editor", flushListener);
 
     crepe
       .create()
@@ -219,7 +253,9 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
 
     return () => {
       observer.disconnect();
-      cancelAnimationFrame(raf);
+      window.removeEventListener("markflow:flush-editor", flushListener);
+      if (renderTimer != null) clearTimeout(renderTimer);
+      flushOnChange();             // flush any pending markdown before tearing down
       crepe.destroy();
       crepeRef.current = null;
     };

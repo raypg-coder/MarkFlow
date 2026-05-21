@@ -1623,6 +1623,20 @@
   padding: 1px 5px;
 }
 
+/* ─── Long-doc perf: skip rendering offscreen heavy blocks ────
+   Targets the three expensive node types: code blocks (each owns a
+   CodeMirror instance), tables, and mermaid SVG embeds. Browser only
+   does layout/paint when they enter viewport. The `contain-intrinsic-size`
+   hint prevents scroll-bar jitter — 280px is the empirical average for
+   a small code block. Off-by-some is fine; scroll position re-syncs on
+   entry. */
+.milkdown .ProseMirror .milkdown-code-block,
+.milkdown .ProseMirror table,
+.milkdown .ProseMirror .mf-embed {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}
+
 /* ─── HR — three muted dots ──────────────────────────────────── */
 .milkdown .ProseMirror hr {
   border: none;
