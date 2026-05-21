@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/kit/core";
+import { replaceAll } from "@milkdown/utils";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 import { marked } from "marked";
+import { useStore } from "../store";
 import { renderEmbeds, reinitMermaidTheme, renderFallbackEmbeds } from "../utils/embeds";
 import { sanitizeForCrepe } from "../utils/sanitize";
 import { wikilinkPlugin } from "../utils/milkdown-wikilink";
@@ -85,6 +87,11 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
 
   const [fallback, setFallback] = useState<null | { html: string; error: string }>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  // The currently-active file as known to Crepe. Updated by the file-switch
+  // effect BEFORE replaceAll runs. The Crepe markdownUpdated callback reads
+  // .current to tag pending-change entries with the correct origin path —
+  // critical for not misrouting A's pending edits into B during a fast switch.
+  const lastSwitchedPathRef = useRef<string>(filePath);
 
   // Render mermaid/svg blocks inside the read-only fallback HTML
   useEffect(() => {
@@ -146,6 +153,10 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
     }
   }, [theme, filePath]);
 
+  // Crepe LIFECYCLE — created exactly once on mount, destroyed on unmount.
+  // File switches do NOT recreate it (would destroy + recreate every nested
+  // CodeMirror instance, the dominant lag source). Instead, a separate
+  // effect below calls replaceAll() to swap content when filePath changes.
   useEffect(() => {
     if (!editorMountRef.current) return;
     setFallback(null);
@@ -166,23 +177,36 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
     // Debounce onChange — markdown serialization + store update + word count
     // are all O(n) on full doc. 150ms means a quick burst of typing only
     // triggers ONE downstream update instead of one per keystroke.
+    //
+    // The pending entry carries its origin path because Crepe is now REUSED
+    // across file switches. If the user types in file A then quickly switches
+    // to file B before debounce fires, we still need to persist A's edits to
+    // A's path — NOT to B's. We capture the path at markdownUpdated time
+    // and use the store directly to bypass any stale onChangeRef closure.
     let onChangeTimer: number | null = null;
-    let pendingMd: string | null = null;
+    let pendingEntry: { path: string; content: string } | null = null;
     const flushOnChange = () => {
       if (onChangeTimer != null) {
         clearTimeout(onChangeTimer);
         onChangeTimer = null;
       }
-      if (pendingMd != null) {
-        onChangeRef.current(pendingMd);
-        pendingMd = null;
+      if (pendingEntry != null) {
+        const { path: p, content } = pendingEntry;
+        pendingEntry = null;
+        // Direct store write — path is the one captured when the edit happened
+        try {
+          useStore.getState().setContent(p, content);
+        } catch (e) {
+          console.warn("[MarkdownEditor] flush setContent failed", e);
+        }
       }
     };
 
     crepe.on((listener) => {
       listener.markdownUpdated((_ctx, md) => {
         lastEmittedRef.current = md;
-        pendingMd = md;
+        // lastSwitchedPathRef is updated BEFORE replaceAll on each switch
+        pendingEntry = { path: lastSwitchedPathRef.current, content: md };
         if (onChangeTimer != null) clearTimeout(onChangeTimer);
         onChangeTimer = window.setTimeout(flushOnChange, 150);
       });
@@ -259,6 +283,57 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
       crepe.destroy();
       crepeRef.current = null;
     };
+    // Mount-only — file switches handled by the dedicated effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // FILE SWITCH — when filePath changes, replace the Crepe document content
+  // without destroying the editor instance. Wait briefly if Crepe is still
+  // creating (initial mount race), retry up to ~500ms.
+  useEffect(() => {
+    if (lastSwitchedPathRef.current === filePath) return;  // first run, same path
+    // Flush any pending edits for the OUTGOING file FIRST — the markdownUpdated
+    // listener captures path via lastSwitchedPathRef.current, so we want
+    // pending entries to be tagged with the OLD path before we update it.
+    window.dispatchEvent(new Event("markflow:flush-editor"));
+    lastSwitchedPathRef.current = filePath;
+    setFallback(null);
+    lastEmittedRef.current = value;
+
+    let attempts = 0;
+    const tryReplace = () => {
+      const crepe = crepeRef.current;
+      if (!crepe) {
+        if (++attempts < 10) setTimeout(tryReplace, 50);
+        return;
+      }
+      try {
+        crepe.editor.action(replaceAll(sanitizeForCrepe(value)));
+        // After content swap, re-fire embed render for new mermaid blocks
+        if (editorMountRef.current) {
+          renderEmbeds(editorMountRef.current, filePath, theme);
+        }
+      } catch (err) {
+        console.warn("[MarkdownEditor] replaceAll failed, falling back", err);
+        // If replaceAll fails (rare — malformed markdown), fall back to
+        // read-only HTML for this file. Crepe stays alive for next file.
+        (async () => {
+          try {
+            const html = await marked.parse(value);
+            setFallback({ html: html as string, error: String((err as Error)?.message || err) });
+          } catch {
+            setFallback({
+              html: `<pre style="white-space:pre-wrap;padding:16px;">${value
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")}</pre>`,
+              error: String((err as Error)?.message || err),
+            });
+          }
+        })();
+      }
+    };
+    tryReplace();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filePath]);
 

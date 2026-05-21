@@ -23,8 +23,10 @@ export function Editor() {
     const dirty = file.content !== file.savedContent;
     return (
       <div className="flex-1 min-h-0 bg-[var(--color-bg)]">
+        {/* NOTE: no `key={file.path}` — MarkdownEditor reuses its Crepe
+            instance across file switches via replaceAll(). The instance
+            destroy/recreate cost was the dominant file-switch latency. */}
         <MarkdownEditor
-          key={file.path}
           filePath={file.path}
           fileName={file.name}
           dirty={dirty}

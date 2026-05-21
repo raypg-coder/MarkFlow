@@ -266,18 +266,67 @@ export function renderEmbeds(root: HTMLElement, filePath: string, theme: "light"
     if (lang === "svg") {
       preview.innerHTML = code;
     } else {
-      const id = `mf-mm-${++mermaidSeq}`;
-      mermaid
-        .render(id, code)
-        .then(({ svg }) => {
-          if (preview!.dataset.code === code) preview!.innerHTML = svg;
-        })
-        .catch((e: unknown) => {
-          const msg = e instanceof Error ? e.message.split("\n")[0] : String(e);
-          preview!.innerHTML = `<div class="mf-embed-error">Mermaid 错误：${msg}</div>`;
-        });
+      scheduleMermaidRender(preview, code);
     }
   });
+}
+
+// ─── Mermaid render queue ────────────────────────────────────
+// Mermaid's `render()` returns a promise but still does heavy synchronous
+// parse + layout work inside. Firing all blocks at once on a multi-diagram
+// document burns ~50-300ms of main-thread time and blocks user input.
+//
+// Solution: queue each render through requestIdleCallback (fallback to
+// setTimeout(0)). Browser interleaves them with user input — typing and
+// scrolling stay responsive even while a 10-diagram doc is rendering.
+const renderQueue: Array<{ preview: HTMLDivElement; code: string }> = [];
+let queueRunning = false;
+
+function pumpQueue() {
+  const next = renderQueue.shift();
+  if (!next) {
+    queueRunning = false;
+    return;
+  }
+  const { preview, code } = next;
+  // Skip if the block's code changed while waiting in queue (user kept typing)
+  if (preview.dataset.code !== code) {
+    scheduleNextPump();
+    return;
+  }
+  const id = `mf-mm-${++mermaidSeq}`;
+  mermaid
+    .render(id, code)
+    .then(({ svg }) => {
+      if (preview.dataset.code === code) preview.innerHTML = svg;
+    })
+    .catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message.split("\n")[0] : String(e);
+      preview.innerHTML = `<div class="mf-embed-error">Mermaid 错误：${msg}</div>`;
+    })
+    .finally(scheduleNextPump);
+}
+
+function scheduleNextPump() {
+  if (typeof (window as any).requestIdleCallback === "function") {
+    (window as any).requestIdleCallback(pumpQueue, { timeout: 250 });
+  } else {
+    setTimeout(pumpQueue, 0);
+  }
+}
+
+function scheduleMermaidRender(preview: HTMLDivElement, code: string) {
+  // De-dup: if the same preview is already queued with the same code, skip
+  const existing = renderQueue.find((q) => q.preview === preview);
+  if (existing) {
+    existing.code = code;       // update to latest code
+    return;
+  }
+  renderQueue.push({ preview, code });
+  if (!queueRunning) {
+    queueRunning = true;
+    scheduleNextPump();
+  }
 }
 
 export function reinitMermaidTheme(theme: "light" | "dark") {

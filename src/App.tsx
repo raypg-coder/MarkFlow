@@ -29,6 +29,7 @@ import { Ribbon } from "./components/Ribbon";
 import { RightSidebar } from "./components/RightSidebar";
 import { SettingsModal } from "./components/SettingsModal";
 import { CloseDirtyDialog } from "./components/CloseDirtyDialog";
+import { QuickOpen } from "./components/QuickOpen";
 import { generateAndSaveImage } from "./utils/image-gen";
 import { appVersion as fetchAppVersion, checkForUpdate } from "./utils/updater";
 import { exportMarkdownToHtml, exportMarkdownToPdf } from "./utils/export";
@@ -275,6 +276,10 @@ function App() {
         // so save reads the freshest markdown, not a stale value.
         window.dispatchEvent(new Event("markflow:flush-editor"));
         saveActive();
+      }
+      if (mod && !e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        useStore.getState().setQuickOpenVisible(true);
       }
       if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
@@ -664,6 +669,7 @@ function App() {
 
       <SettingsModal />
       <CloseDirtyDialog />
+      <QuickOpen />
       <ImageGenToast />
       <div className="focus-mode-indicator" />
     </div>

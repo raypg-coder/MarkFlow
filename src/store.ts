@@ -62,6 +62,7 @@ interface State {
   semanticSearching: boolean;
   closeDirtyPath: string | null;       // path of file pending close-confirm
   recoveredOnceAt: number | null;       // timestamp when swap recovery ran (gates restoreTrees ordering)
+  quickOpenVisible: boolean;            // Cmd+P file switcher modal
 
   addFolder: () => Promise<void>;
   removeFolder: (rootPath: string) => void;
@@ -74,6 +75,7 @@ interface State {
   closeFile: (path: string) => void;
   requestCloseFile: (path: string) => void;     // dirty-aware close (prompts on dirty)
   setCloseDirtyPath: (path: string | null) => void;
+  setQuickOpenVisible: (v: boolean) => void;
   setContent: (path: string, content: string) => void;
   saveFile: (path: string) => Promise<void>;
   saveActive: () => Promise<void>;
@@ -222,6 +224,7 @@ export const useStore = create<State>((set, get) => ({
   semanticSearching: false,
   closeDirtyPath: null,
   recoveredOnceAt: null,
+  quickOpenVisible: false,
 
   addFolder: async () => {
     const picked = await open({ directory: true, multiple: false });
@@ -409,6 +412,7 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setCloseDirtyPath: (path) => set({ closeDirtyPath: path }),
+  setQuickOpenVisible: (v) => set({ quickOpenVisible: v }),
 
   recoverSwaps: async () => {
     if (get().recoveredOnceAt) return;        // run at most once per session

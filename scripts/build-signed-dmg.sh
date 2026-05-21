@@ -48,6 +48,13 @@ fi
 echo "✓ 找到 updater 私钥"
 
 # ─── 3. tauri build ──────────────────────────────────────────
+# 预防 bundle_dmg.sh 因上一次构建残留挂载卷而失败 (常见死法之一)
+for vol in /Volumes/MarkFlow /Volumes/dmg.*; do
+  [[ -e "$vol" ]] || continue
+  echo "→ 卸载残留挂载: $vol"
+  hdiutil detach "$vol" -force >/dev/null 2>&1 || true
+done
+
 # Tauri 内嵌的 Swift S3 client 公证 .app 时容易在 Apple notary S3 上传
 # 这一步死锁 (HTTPClientError.deadlineExceeded, completedParts: [])。
 # 解决：暂时清空 Apple 凭据 env vars → Tauri 跳过 .app 公证，只签名。
