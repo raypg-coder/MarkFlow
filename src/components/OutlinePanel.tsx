@@ -77,7 +77,7 @@ export function OutlinePanel() {
           <button
             key={i}
             onClick={() => scrollToHeading(h)}
-            className="block w-full text-left text-[12.5px] py-1 truncate text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)] rounded-sm mx-1"
+            className="block w-full text-left text-[12.5px] py-1 truncate text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] rounded-md mx-1"
             style={{ paddingLeft: 10 + (h.level - minLevel) * 12, paddingRight: 10 }}
             title={h.text}
           >

@@ -157,7 +157,7 @@ function Row({ node, depth }: RowProps) {
               if (e.key === "Escape") setEditing(false);
             }}
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 bg-[var(--color-bg)] border border-[var(--color-accent-2,#00ffff)] rounded-none px-1 text-[12.5px] outline-none font-mono"
+            className="flex-1 bg-[var(--color-bg)] border border-[var(--color-accent)] rounded-md px-1.5 text-[12.5px] outline-none font-mono focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-accent)_18%,transparent)]"
           />
         ) : (
           <>
@@ -179,7 +179,7 @@ function Row({ node, depth }: RowProps) {
         >
           <div
             style={{ left: menu.x, top: menu.y }}
-            className="absolute bg-[var(--color-bg)] border border-[var(--color-border)] rounded-sm shadow-lg shadow-black/5 py-1 text-[13px] min-w-[160px]"
+            className="absolute bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md shadow-lg shadow-black/5 py-1 text-[13px] min-w-[160px]"
             onClick={(e) => e.stopPropagation()}
           >
             {node.is_dir && (
@@ -248,7 +248,7 @@ function WorkspaceSection({ rootPath }: { rootPath: string }) {
   return (
     <div className="mb-1">
       <div
-        className="group flex items-center gap-1.5 px-3 py-1.5 cursor-pointer select-none hover:bg-[var(--color-bg)] rounded-sm mx-1"
+        className="group flex items-center gap-1.5 px-3 py-1.5 cursor-pointer select-none hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] rounded-md mx-1"
         onClick={() => toggleExpand(rootPath)}
         title={rootPath}
       >
@@ -342,7 +342,7 @@ export function FileTree() {
         <p className="text-[13px] mb-4 leading-relaxed">还没有添加任何文件夹</p>
         <button
           onClick={addFolder}
-          className="px-3.5 py-1.5 text-[12.5px] rounded-sm bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-85"
+          className="px-3.5 py-1.5 text-[12.5px] rounded-md bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-85"
         >
           添加文件夹
         </button>

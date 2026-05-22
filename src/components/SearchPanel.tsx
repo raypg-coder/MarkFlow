@@ -50,7 +50,7 @@ export function SearchPanel() {
           <div
             key={i}
             onClick={() => openFile(h.path, basename(h.path))}
-            className="px-3 py-2 cursor-pointer hover:bg-[var(--color-bg)] mx-1 rounded-sm"
+            className="px-3 py-2 cursor-pointer hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] mx-1 rounded-md"
           >
             <div className="text-[12px] text-[var(--color-accent)] truncate">
               {basename(h.path)} · {h.line}

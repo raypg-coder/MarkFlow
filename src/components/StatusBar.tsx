@@ -100,7 +100,7 @@ function UpdatePill({
     return (
       <button
         onClick={onClick}
-        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-sm text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
+        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-full text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
         title={`新版本 v${info.version} 可用 — 点击下载并安装`}
         style={{
           animation: "update-pulse 2s ease-in-out infinite",
@@ -131,7 +131,7 @@ function UpdatePill({
     return (
       <button
         onClick={() => restartApp().catch(() => {})}
-        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-sm text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
+        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-full text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
         title={`v${state.info.version} 已就绪 — 点击重启应用`}
         style={{
           animation: "update-pulse 1.6s ease-in-out infinite",

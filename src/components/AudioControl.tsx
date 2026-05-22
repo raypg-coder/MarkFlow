@@ -27,7 +27,7 @@ export function AudioControl() {
       <button
         onClick={() => setOpen((v) => !v)}
         title={playing ? `ambient: ${settings.preset}` : "ambient · off"}
-        className={`p-1 rounded-sm transition-colors ${
+        className={`p-1 rounded-md transition-colors ${
           playing
             ? "text-[var(--color-accent)]"
             : "text-[var(--chrome-text-subtle)] hover:text-[var(--chrome-text-muted)]"
@@ -38,12 +38,12 @@ export function AudioControl() {
 
       {open && (
         <div
-          className="absolute bottom-full right-0 mb-2 w-[200px] bg-[var(--color-bg)] border border-[var(--color-border)] rounded-sm shadow-lg shadow-black/40 p-2.5 z-[60] font-mono"
+          className="absolute bottom-full right-0 mb-2 w-[200px] bg-[var(--color-bg-soft)] border border-[var(--glass-border,var(--color-border))] rounded-xl shadow-2xl p-2.5 z-[60] font-mono"
           style={{
             boxShadow: `
-              inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 28%, transparent),
-              0 0 20px -8px color-mix(in oklab, var(--color-accent) 30%, transparent),
-              0 12px 32px rgba(0,0,0,0.5)
+              inset 0 0 0 1px var(--glass-border),
+              0 0 32px -8px color-mix(in oklab, var(--color-accent) 25%, transparent),
+              0 24px 48px rgba(0,0,0,0.55)
             `,
           }}
         >
@@ -58,7 +58,7 @@ export function AudioControl() {
                 <button
                   key={p.key}
                   onClick={() => ambientAudio.setPreset(p.key as Preset)}
-                  className={`w-full text-left text-[11px] px-2 py-1 rounded-sm transition-colors flex items-center gap-2 ${
+                  className={`w-full text-left text-[11px] px-2.5 py-1.5 rounded-md transition-colors flex items-center gap-2 ${
                     active
                       ? "bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)] text-[var(--color-accent)]"
                       : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text)]"

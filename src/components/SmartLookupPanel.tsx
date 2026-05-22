@@ -120,7 +120,7 @@ export function SmartLookupPanel() {
 
       {/* Configuration check */}
       {notConfigured && (
-        <div className="mx-3 my-2 p-2.5 rounded-sm bg-[var(--md-amber-soft)] text-[12px] leading-relaxed">
+        <div className="mx-3 my-2 p-2.5 rounded-md bg-[var(--md-amber-soft)] text-[12px] leading-relaxed">
           <div className="font-medium mb-1">尚未配置嵌入模型</div>
           <button
             onClick={() => setSettingsOpen(true)}
@@ -135,7 +135,7 @@ export function SmartLookupPanel() {
       {/* Search input */}
       {!notConfigured && (
         <div className="px-3 pb-2">
-          <div className="flex items-center gap-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-sm px-2.5 py-1.5 focus-within:border-[var(--color-accent)]">
+          <div className="flex items-center gap-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 focus-within:border-[var(--color-accent)]">
             <Search size={12} className="text-[var(--color-text-subtle)] shrink-0" />
             <input
               value={semanticQuery}
@@ -193,7 +193,7 @@ export function SmartLookupPanel() {
       )}
 
       {rebuildError && (
-        <div className="mx-3 mb-2 p-2 rounded-sm bg-[var(--md-rose-soft)] text-[11px] text-[var(--md-rose)] font-mono">
+        <div className="mx-3 mb-2 p-2 rounded-md bg-[var(--md-rose-soft)] text-[11px] text-[var(--md-rose)] font-mono">
           {rebuildError}
         </div>
       )}
@@ -235,7 +235,7 @@ export function SmartLookupPanel() {
           <button
             key={`${hit.chunk.path}-${hit.chunk.chunkIdx}-${i}`}
             onClick={() => openFile(hit.chunk.path, basename(hit.chunk.path))}
-            className="block w-full text-left px-3 py-2 mx-1 rounded-sm hover:bg-[var(--color-bg)] group"
+            className="block w-full text-left px-3 py-2 mx-1 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] group"
           >
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-mono text-[var(--color-accent)] shrink-0">

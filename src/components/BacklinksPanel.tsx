@@ -57,7 +57,7 @@ export function BacklinksPanel() {
           <div key={source} className="mb-2">
             <button
               onClick={() => openFile(source, basename(source))}
-              className="w-full flex items-center gap-1.5 px-3 py-1 text-left hover:bg-[var(--color-bg)] rounded-sm mx-1"
+              className="w-full flex items-center gap-1.5 px-3 py-1 text-left hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] rounded-md mx-1"
               title={source}
             >
               <Link2 size={11} className="text-[var(--color-accent)] shrink-0" strokeWidth={2} />

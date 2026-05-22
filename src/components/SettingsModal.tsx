@@ -87,7 +87,7 @@ export function SettingsModal() {
           <h2 className="text-[14px] font-semibold">设置</h2>
           <button
             onClick={() => setSettingsOpen(false)}
-            className="p-1 rounded-sm hover:bg-[var(--color-bg-soft)] text-[var(--color-text-muted)]"
+            className="p-1 rounded-md hover:bg-[var(--color-bg-soft)] text-[var(--color-text-muted)]"
           >
             <X size={15} strokeWidth={1.75} />
           </button>
@@ -243,7 +243,7 @@ function VersionPanel() {
         <button
           onClick={onCheck}
           disabled={updateState.kind === "checking" || updateState.kind === "downloading"}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-sm bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] disabled:opacity-40 font-mono"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] rounded-md bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] disabled:opacity-40 font-mono"
         >
           {updateState.kind === "checking" ? (
             <>
@@ -296,14 +296,14 @@ function UpdateStatus({
 
   if (state.kind === "available") {
     return (
-      <div className="rounded-sm border border-[var(--color-accent)] bg-[color-mix(in_oklab,var(--color-accent)_5%,transparent)] p-2.5 space-y-1.5">
+      <div className="rounded-md border border-[var(--color-accent)] bg-[color-mix(in_oklab,var(--color-accent)_5%,transparent)] p-2.5 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[11.5px] font-mono text-[var(--color-accent)] uppercase tracking-wider">
             ▶ 发现新版本 v{state.info.version}
           </span>
           <button
             onClick={onInstall}
-            className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-sm font-medium font-mono bg-[var(--color-accent)] text-black hover:opacity-90"
+            className="flex items-center gap-1 px-3 py-1.5 text-[11px] rounded-lg font-medium font-mono bg-[var(--color-accent)] text-white hover:opacity-90"
           >
             <Download size={10} strokeWidth={2} /> 下载并安装
           </button>
@@ -334,7 +334,7 @@ function UpdateStatus({
             {pct.toFixed(0)}%
           </span>
         </div>
-        <div className="h-1 bg-[var(--color-bg)] overflow-hidden rounded-sm">
+        <div className="h-1 bg-[var(--color-bg)] overflow-hidden rounded-md">
           <div
             className="h-full bg-[var(--color-accent)] transition-all duration-200"
             style={{
@@ -349,13 +349,13 @@ function UpdateStatus({
 
   if (state.kind === "ready") {
     return (
-      <div className="rounded-sm border border-[var(--color-success)] bg-[color-mix(in_oklab,var(--color-success)_8%,transparent)] p-2.5 flex items-center justify-between">
+      <div className="rounded-md border border-[var(--color-success)] bg-[color-mix(in_oklab,var(--color-success)_8%,transparent)] p-2.5 flex items-center justify-between">
         <span className="text-[11.5px] text-[var(--color-success)] font-mono">
           ✓ v{state.info.version} 已就绪，重启生效
         </span>
         <button
           onClick={onRestart}
-          className="px-2.5 py-1 text-[11px] rounded-sm font-medium font-mono bg-[var(--color-success)] text-black hover:opacity-90"
+          className="px-3 py-1.5 text-[11px] rounded-lg font-medium font-mono bg-[var(--color-success)] text-white hover:opacity-90"
         >
           立即重启
         </button>
@@ -365,7 +365,7 @@ function UpdateStatus({
 
   if (state.kind === "error") {
     return (
-      <div className="rounded-sm border border-[var(--color-danger)] bg-[var(--md-rose-soft)] p-2.5">
+      <div className="rounded-md border border-[var(--color-danger)] bg-[var(--md-rose-soft)] p-2.5">
         <div className="flex items-center gap-1.5 text-[11.5px] text-[var(--color-danger)] font-mono">
           <AlertCircle size={11} /> 更新失败
         </div>

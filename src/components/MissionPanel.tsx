@@ -89,7 +89,7 @@ export function MissionPanel() {
             <button
               key={p}
               onClick={() => setPriority(p)}
-              className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded-sm transition-colors ${
+              className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded-md transition-colors ${
                 priority === p
                   ? `priority-pill priority-${p} priority-on`
                   : "text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)]"
