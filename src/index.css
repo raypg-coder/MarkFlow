@@ -1071,7 +1071,7 @@
   min-height: 60vh;
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.45;
   color: var(--color-text);
   caret-color: var(--color-accent);
   word-wrap: break-word;
@@ -1144,7 +1144,7 @@
 
 /* ─── Body ───────────────────────────────────────────────────── */
 .milkdown .ProseMirror p {
-  margin: 0.5rem 0;
+  margin: 0.4rem 0;
 }
 .milkdown .ProseMirror strong {
   font-weight: 700;
@@ -1423,7 +1423,7 @@
   border-left: 3px solid var(--color-border-strong);
   background: transparent;
   padding: 0.05rem 0 0.05rem 1rem;
-  margin: 0.7rem 0;
+  margin: 0.55rem 0;
   color: var(--color-text-muted);
   font-style: normal;
   border-radius: 0;
@@ -1432,7 +1432,7 @@
   display: none;
 }
 .milkdown .ProseMirror blockquote p {
-  margin: 0.25rem 0;
+  margin: 0.2rem 0;
 }
 .milkdown .ProseMirror blockquote > :first-child {
   margin-top: 0;
@@ -1445,7 +1445,7 @@
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
   padding-left: 1.6rem;
-  margin: 0.5rem 0;
+  margin: 0.4rem 0;
 }
 .milkdown .ProseMirror ul {
   list-style: disc;
@@ -1454,7 +1454,7 @@
   list-style: decimal;
 }
 .milkdown .ProseMirror li {
-  margin: 0.18rem 0;
+  margin: 0.12rem 0;
 }
 .milkdown .ProseMirror ul li::marker {
   color: var(--color-text-subtle);
@@ -1465,19 +1465,39 @@
   font-weight: 500;
 }
 .milkdown .ProseMirror li > p {
-  margin: 0.18rem 0;
+  margin: 0.12rem 0;
 }
 .milkdown .ProseMirror ul ul,
 .milkdown .ProseMirror ol ol,
 .milkdown .ProseMirror ul ol,
 .milkdown .ProseMirror ol ul {
-  margin: 0.18rem 0;
+  margin: 0.12rem 0;
 }
 
-/* Task list */
+/* Task list — flex layout for reliable checkbox+text baseline alignment.
+   Old approach used `vertical-align: -2px` on the checkbox which drifted
+   whenever font-size / line-height changed. Flex with align-items:flex-start
+   plus a margin-top equal to (line-height - checkbox-size)/2 keeps the
+   checkbox visually centered on the first line of text regardless of CSS
+   variable tweaks. */
 .milkdown .ProseMirror ul li[data-task-list-item] {
   list-style: none;
   margin-left: -1.5em;
+  display: flex;
+  align-items: flex-start;
+}
+.milkdown .ProseMirror ul li[data-task-list-item] > input[type="checkbox"] {
+  /* (font 15px * line-height 1.45 = 21.75px line) - 13px box = 8.75px slack,
+     half above ≈ 4px → 4px margin-top centers it on the first line cap. */
+  margin-top: 4px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.milkdown .ProseMirror ul li[data-task-list-item] > p,
+.milkdown .ProseMirror ul li[data-task-list-item] > div {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
 }
 .milkdown .ProseMirror input[type="checkbox"] {
   appearance: none;
@@ -1486,8 +1506,6 @@
   height: 13px;
   border: 1.5px solid var(--color-border-strong);
   border-radius: 3px;
-  vertical-align: -2px;
-  margin-right: 7px;
   cursor: pointer;
   background: var(--color-bg);
   transition: background 120ms, border-color 120ms;
