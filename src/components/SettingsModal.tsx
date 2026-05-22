@@ -72,12 +72,12 @@ export function SettingsModal() {
       onClick={() => setSettingsOpen(false)}
     >
       <div
-        className="w-[520px] max-w-[92vw] max-h-[88vh] flex flex-col bg-[var(--color-bg)] text-[var(--color-text)] rounded-sm overflow-hidden"
+        className="w-[520px] max-w-[92vw] max-h-[88vh] flex flex-col bg-[var(--color-bg-soft)] text-[var(--color-text)] rounded-xl overflow-hidden"
         style={{
           boxShadow: `
-            inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 35%, transparent),
-            0 0 32px -8px color-mix(in oklab, var(--color-accent) 30%, transparent),
-            0 24px 48px rgba(0,0,0,0.6)
+            inset 0 0 0 1px var(--glass-border),
+            0 0 40px -8px color-mix(in oklab, var(--color-accent) 25%, transparent),
+            0 32px 64px rgba(0,0,0,0.55)
           `,
         }}
         onClick={(e) => e.stopPropagation()}
@@ -120,7 +120,7 @@ export function SettingsModal() {
               <button
                 onClick={testConnection}
                 disabled={status.kind === "loading" || !draft.baseURL}
-                className="px-3 py-1.5 text-[12.5px] rounded-sm bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-85 disabled:opacity-40"
+                className="px-3.5 py-1.5 text-[12.5px] rounded-lg bg-[var(--color-text)] text-[var(--color-bg)] hover:opacity-85 disabled:opacity-40"
               >
                 {status.kind === "loading" ? "测试中…" : "测试连接 / 加载模型"}
               </button>
@@ -175,13 +175,13 @@ export function SettingsModal() {
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-bg-soft)]">
           <button
             onClick={() => setSettingsOpen(false)}
-            className="px-3 py-1.5 text-[12.5px] rounded-sm text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+            className="px-4 py-2 text-[12.5px] rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
           >
             取消
           </button>
           <button
             onClick={save}
-            className="px-3 py-1.5 text-[12.5px] rounded-sm font-medium bg-[var(--color-accent)] text-black hover:opacity-90"
+            className="px-4 py-2 text-[12.5px] rounded-lg font-medium bg-[var(--color-accent)] text-white hover:opacity-90"
           >
             保存
           </button>

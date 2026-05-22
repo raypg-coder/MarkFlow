@@ -21,22 +21,28 @@
   --chrome-text-subtle: var(--color-text-subtle);
   --chrome-accent: var(--color-accent);
 
-  /* —— accent (light mode — toned for white bg) —— */
-  --color-accent:   #007a8a;
-  --color-accent-2: #007a8a;
-  --color-accent-3: #b71b66;
-  --color-accent-soft: rgba(0, 122, 138, 0.14);
-  --color-accent-glow: rgba(0, 122, 138, 0.28);
+  /* —— accent (light mode — matched to dark mode's blue+purple,
+       toned darker for AAA on cream bg) —— */
+  --color-accent:   #2563eb;     /* rich blue */
+  --color-accent-2: #2563eb;
+  --color-accent-3: #7c3aed;     /* deep purple */
+  --color-accent-soft: rgba(37, 99, 235, 0.12);
+  --color-accent-glow: rgba(37, 99, 235, 0.28);
   --color-danger:   #d33046;
-  --color-success:  #00a043;
-  --color-warning:  #d18800;
+  --color-success:  #16a34a;
+  --color-warning:  #d97706;
 
-  --md-violet: #7e62c4;
-  --md-amber: #d99043;
-  --md-rose: #c0246b;
-  --md-teal: #0a8c7e;
-  --md-amber-soft: #fdf3e6;
-  --md-rose-soft: #fdecf2;
+  --md-violet: #7c3aed;
+  --md-amber: #d97706;
+  --md-rose: #be185d;
+  --md-teal: #0d9488;
+  --md-amber-soft: #fef3c7;
+  --md-rose-soft: #fce7f3;
+
+  /* Glass surface tokens (no-op in light mode; defined for shared CSS rules) */
+  --glass-bg: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.005));
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-blur: 0px;
 
   --font-mono: "Fira Code", "JetBrains Mono", "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -49,20 +55,23 @@
   }
   :root.dark {
     color-scheme: dark;
-    /* —— pitch black command center —— */
-    --color-bg: #000000;
-    --color-bg-soft: #0a0a0d;
-    --color-bg-muted: #14141a;
-    --color-border: #1a1a22;
-    --color-border-strong: #2a2a35;
+    /* —— Modern productivity glass aesthetic
+       Inspired by Linear / Notion / contemporary dashboards.
+       Deep navy-purple gradient base, soft blue+purple accents,
+       glass surfaces with subtle backdrop blur. */
+    --color-bg: #0c0e1f;          /* deep navy base */
+    --color-bg-soft: #161834;     /* panel surface */
+    --color-bg-muted: #1e2147;    /* elevated / active */
+    --color-border: #2a2e52;
+    --color-border-strong: #3d4170;
 
-    /* cool monochromatic text */
-    --color-text: #e4e4e8;
-    --color-text-muted: #76767e;
-    --color-text-subtle: #4a4a52;
+    /* Text — calibrated for the navy base */
+    --color-text: #ececf5;        /* body */
+    --color-text-muted: #a0a4c0;  /* meta — passes AAA */
+    --color-text-subtle: #696e8c; /* tertiary — passes AA */
 
-    /* chrome — pitch black, frame is in the glow lines */
-    --color-bg-chrome: #000000;
+    /* Chrome shares the navy base — glass effects do the depth instead */
+    --color-bg-chrome: #0a0c1a;
     --chrome-bg-soft: var(--color-bg-soft);
     --chrome-bg-muted: var(--color-bg-muted);
     --chrome-border: var(--color-border);
@@ -71,24 +80,29 @@
     --chrome-text-subtle: var(--color-text-subtle);
     --chrome-accent: var(--color-accent);
 
-    /* —— accent layers (per cyberpunk dual-neon spec) —— */
-    --color-accent:   #00ffff;     /* CYAN — primary */
-    --color-accent-2: #00ffff;     /* alias for backward-compat */
-    --color-accent-3: #ff007f;     /* HOT PINK — secondary */
-    --color-accent-soft: rgba(0, 255, 255, 0.10);
-    --color-accent-glow: rgba(0, 255, 255, 0.45);
-    --color-danger:   #ff3355;
-    --color-success:  #00ff66;     /* matrix green — reserved for "saved/ok" */
-    --color-warning:  #ffbf2c;
+    /* —— Bright blue + soft purple accent pair —— */
+    --color-accent:   #4a7eff;     /* electric blue — primary */
+    --color-accent-2: #4a7eff;     /* alias */
+    --color-accent-3: #b194ff;     /* soft violet — secondary */
+    --color-accent-soft: rgba(74, 126, 255, 0.12);
+    --color-accent-glow: rgba(74, 126, 255, 0.40);
+    --color-danger:   #f56565;
+    --color-success:  #4ade80;     /* mint green — saved/ok */
+    --color-warning:  #fbbf24;
 
     /* markdown editorial colors */
-    --md-violet: #b89aff;
-    --md-amber: #ffd166;
-    --md-rose: #ff7ba0;
-    --md-teal: #5dd6c5;
+    --md-violet: #b194ff;
+    --md-amber: #fbbf24;
+    --md-rose: #f472b6;
+    --md-teal: #2dd4bf;
     --md-amber-soft: #2a2118;
     --md-rose-soft: #2a1a22;
-    --code-bg: #0b0b12;
+    --code-bg: #14163a;
+
+    /* Glass surface tokens — used by chrome panels & modals */
+    --glass-bg: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 14px;
   }
   :root:not(.dark) {
     --code-bg: #f6f6f3;
@@ -101,17 +115,35 @@
   body {
     background: var(--color-bg);
     color: var(--color-text);
-    /* Cyberpunk dual-neon spec: monospace EVERYWHERE */
     font-family: var(--font-mono);
     -webkit-font-smoothing: antialiased;
     font-size: 13px;
     letter-spacing: 0;
-    font-feature-settings: "calt" 1, "ss01" 1, "ss02" 1, "ss03" 1; /* Fira Code ligatures */
+    font-feature-settings: "calt" 1, "ss01" 1, "ss02" 1, "ss03" 1;
+    position: relative;
   }
-  /* ─── Cyber scrollbar — 2px laser line, glowing thumb, no track ── */
+  /* ─── Ambient gradient overlay (dark mode only)
+     Soft blue + purple radial glows at corners give the navy bg the
+     "modern dashboard" depth from the reference. Sits behind all UI
+     via z-index, no pointer events. */
+  :root.dark body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 95% -10%, rgba(74, 126, 255, 0.12), transparent 55%),
+      radial-gradient(ellipse 70% 50% at -10% 110%, rgba(177, 148, 255, 0.10), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  :root.dark #root {
+    position: relative;
+    z-index: 1;
+  }
+  /* ─── Scrollbar — 8px soft pill, fades in on hover ──────────── */
   ::-webkit-scrollbar {
-    width: 2px;
-    height: 2px;
+    width: 10px;
+    height: 10px;
     background: transparent;
   }
   ::-webkit-scrollbar-track,
@@ -120,18 +152,18 @@
   }
   ::-webkit-scrollbar-thumb {
     background: transparent;
-    border-radius: 0;
-    transition: background 200ms ease;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 200ms ease;
   }
   *:hover > ::-webkit-scrollbar-thumb,
   *:hover::-webkit-scrollbar-thumb {
-    background: var(--color-accent-2, var(--color-accent));
-    box-shadow: 0 0 4px var(--color-accent-2, var(--color-accent));
+    background-color: color-mix(in oklab, var(--color-text) 18%, transparent);
   }
   ::-webkit-scrollbar-thumb:hover,
   ::-webkit-scrollbar-thumb:active {
-    background: var(--color-accent-2, var(--color-accent));
-    box-shadow: 0 0 6px var(--color-accent-2, var(--color-accent));
+    background-color: color-mix(in oklab, var(--color-text) 32%, transparent);
   }
   /* Firefox */
   * {
@@ -139,7 +171,7 @@
     scrollbar-color: transparent transparent;
   }
   *:hover {
-    scrollbar-color: var(--color-accent-2, var(--color-accent)) transparent;
+    scrollbar-color: color-mix(in oklab, var(--color-text) 22%, transparent) transparent;
   }
   button {
     transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
@@ -147,24 +179,29 @@
 }
 
 /* ============================================================
-   Window chrome — Zed-style dark frame on a light editor surface.
-   In both themes, chrome is darker than the editor for clear
-   visual separation.
+   Window chrome — glass surfaces over the ambient navy gradient.
    ============================================================ */
 .app-chrome {
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
 }
+:root.dark .app-chrome {
+  background: rgba(10, 12, 26, 0.6);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
 .app-topbar {
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
   position: relative;
-  /* dot grid texture */
-  background-image:
-    radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--color-text) 18%, transparent) 0.6px, transparent 0);
-  background-size: 14px 14px;
 }
-/* thin green underline along the bottom of the topbar — defines the frame */
+:root.dark .app-topbar {
+  background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+/* thin accent underline along the bottom of the topbar */
 .app-topbar::after {
   content: "";
   position: absolute;
@@ -175,15 +212,19 @@
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in oklab, var(--color-accent) 35%, transparent) 8%,
-    color-mix(in oklab, var(--color-accent) 35%, transparent) 92%,
+    color-mix(in oklab, var(--color-accent) 25%, transparent) 25%,
+    color-mix(in oklab, var(--color-accent-3) 22%, transparent) 75%,
     transparent
   );
-  opacity: 0.6;
+  opacity: 0.5;
   pointer-events: none;
 }
+:root.dark .app-topbar::after { display: none; }  /* glass border handles it */
 .app-panel {
   background: var(--color-bg);
+}
+:root.dark .app-panel {
+  background: transparent;  /* show ambient gradient through */
 }
 .app-statusbar {
   background: var(--color-bg-chrome);
@@ -192,8 +233,31 @@
   font-feature-settings: "tnum" on;
   position: relative;
 }
-/* glow line at top of statusbar */
-.app-statusbar::before {
+:root.dark .app-statusbar {
+  background: linear-gradient(0deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+
+/* Sidebars (left file/search/mission + right outline/backlinks/etc) and
+   the leftmost Ribbon strip — all use chrome-fade-* layout classes.
+   Apply glass surface in dark mode so the navy ambient gradient bleeds
+   through. Light mode keeps the existing solid bg. */
+:root.dark .chrome-fade-left {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border-right: 1px solid var(--glass-border);
+}
+:root.dark .chrome-fade-right {
+  background: linear-gradient(270deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)) !important;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border-left: 1px solid var(--glass-border);
+}
+/* glow line at top of statusbar — light mode only (dark uses glass border) */
+:root:not(.dark) .app-statusbar::before {
   content: "";
   position: absolute;
   left: 0;
@@ -203,11 +267,11 @@
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in oklab, var(--color-accent) 30%, transparent) 20%,
-    color-mix(in oklab, var(--color-accent) 30%, transparent) 80%,
+    color-mix(in oklab, var(--color-accent) 25%, transparent) 20%,
+    color-mix(in oklab, var(--color-accent) 25%, transparent) 80%,
     transparent
   );
-  opacity: 0.5;
+  opacity: 0.4;
   pointer-events: none;
 }
 
@@ -217,13 +281,12 @@
 .geek-label {
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--color-text-subtle);
-  text-transform: lowercase;
-  font-weight: 500;
+  text-transform: uppercase;
+  font-weight: 600;
 }
-.geek-label::before { content: "[ "; opacity: 0.6; }
-.geek-label::after { content: " ]"; opacity: 0.6; }
+/* Brackets removed — clean caps label matches modern productivity aesthetic */
 
 /* On dark chrome contexts */
 .app-topbar .geek-label,
@@ -247,13 +310,13 @@
   white-space: nowrap;
 }
 
-/* status pill: [ok] / [err] / [run] — ANSI-ish flat tags */
+/* Status pill — rounded soft chip */
 .pill {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.04em;
-  padding: 1px 5px;
-  border-radius: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
   text-transform: lowercase;
   white-space: nowrap;
   line-height: 1.4;
@@ -347,42 +410,38 @@
   animation: critical-breath 1.6s ease-in-out infinite;
 }
 
-/* Octagon checkbox */
+/* Round checkbox — soft blue when checked (modern productivity style) */
 .octagon-check {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   margin-top: 2px;
   background: transparent;
-  border: 1.5px solid color-mix(in oklab, var(--color-accent-2, var(--color-accent)) 50%, transparent);
+  border: 1.5px solid color-mix(in oklab, var(--color-text) 30%, transparent);
+  border-radius: 50%;
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 180ms ease;
-  /* octagon corners chipped — use clip-path */
-  clip-path: polygon(
-    20% 0%, 80% 0%, 100% 20%, 100% 80%,
-    80% 100%, 20% 100%, 0% 80%, 0% 20%
-  );
+  transition: all 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .octagon-check:hover {
-  border-color: var(--color-accent-2, var(--color-accent));
-  box-shadow: 0 0 6px color-mix(in oklab, var(--color-accent-2, var(--color-accent)) 40%, transparent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 14%, transparent);
 }
 .octagon-glyph {
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1;
-  color: var(--color-success, #00ff66);
+  color: white;
   font-weight: 700;
   opacity: 0;
   transition: opacity 200ms ease;
 }
 .octagon-check.is-checked {
-  border-color: var(--color-success, #00ff66);
-  background: color-mix(in oklab, var(--color-success, #00ff66) 18%, transparent);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
   animation: octagon-flash 380ms ease-out;
 }
 .octagon-check.is-checked .octagon-glyph {
@@ -390,9 +449,9 @@
   animation: octagon-glyph-in 200ms 100ms both;
 }
 @keyframes octagon-flash {
-  0%   { box-shadow: 0 0 0 0 transparent; }
-  30%  { box-shadow: 0 0 12px 2px var(--color-success, #00ff66); }
-  100% { box-shadow: 0 0 6px -2px color-mix(in oklab, var(--color-success, #00ff66) 50%, transparent); }
+  0%   { box-shadow: 0 0 0 0 var(--color-accent); }
+  30%  { box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 35%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 @keyframes octagon-glyph-in {
   0%   { transform: scale(0.3); opacity: 0; }
@@ -724,39 +783,14 @@
   z-index: 1;
 }
 
-/* Active row — sharp non-rounded pink frame with breathing pulse */
+/* Active row — soft accent fill + thin accent left bar, no infinite pulse */
 .scan-row.is-active {
-  border-radius: 0 !important;
-  background: color-mix(in oklab, var(--color-accent-3) 6%, transparent) !important;
-  animation: selected-pulse 2.4s ease-in-out infinite;
+  background: color-mix(in oklab, var(--color-accent) 12%, transparent) !important;
+  color: var(--color-text) !important;
+  box-shadow: inset 2px 0 0 var(--color-accent);
 }
 :root.dark .scan-row.is-active {
-  background: color-mix(in oklab, var(--color-accent-3) 8%, transparent) !important;
-  animation: selected-pulse-dark 2.4s ease-in-out infinite;
-}
-@keyframes selected-pulse {
-  0%, 100% {
-    box-shadow:
-      inset 0 0 0 1px var(--color-accent-3),
-      0 0 4px color-mix(in oklab, var(--color-accent-3) 25%, transparent);
-  }
-  50% {
-    box-shadow:
-      inset 0 0 0 1px var(--color-accent-3),
-      0 0 8px color-mix(in oklab, var(--color-accent-3) 45%, transparent);
-  }
-}
-@keyframes selected-pulse-dark {
-  0%, 100% {
-    box-shadow:
-      inset 0 0 0 1px var(--color-accent-3),
-      0 0 6px color-mix(in oklab, var(--color-accent-3) 40%, transparent);
-  }
-  50% {
-    box-shadow:
-      inset 0 0 0 1.5px var(--color-accent-3),
-      0 0 12px color-mix(in oklab, var(--color-accent-3) 70%, transparent);
-  }
+  background: color-mix(in oklab, var(--color-accent) 18%, transparent) !important;
 }
 .scan-row.is-active::before {
   display: none;
@@ -890,53 +924,43 @@
   animation: saving-beam 700ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Inputs in chrome — sharp 1px, neon pulse on focus */
+/* Inputs — soft rounded, subtle ring on focus */
 .cyber-input {
-  background: var(--color-bg-soft);
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: 2px;
+  border-radius: 8px;
   transition: border-color 140ms ease, box-shadow 140ms ease;
   font-family: var(--font-mono);
 }
+:root.dark .cyber-input {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--glass-border);
+}
 .cyber-input:focus-within {
   border-color: var(--color-accent);
-  animation: input-pulse 2s ease-in-out infinite;
-}
-@keyframes input-pulse {
-  0%, 100% { box-shadow: 0 0 0 1px var(--color-accent), 0 0 6px -1px var(--color-accent-glow); }
-  50%      { box-shadow: 0 0 0 1px var(--color-accent), 0 0 14px -1px var(--color-accent-glow); }
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 18%, transparent);
 }
 
-/* Tabs — sharp top corners, mono filename, active = lifted with accent bar */
+/* Tabs — soft rounded pill, active = subtle glass card with accent ring */
 .tab-item {
   position: relative;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
+  border-radius: 8px;
+  margin: 2px 1px 4px;        /* vertical breathing so pill doesn't touch topbar edges */
   font-family: var(--font-mono);
   letter-spacing: -0.005em;
   color: var(--color-text-muted);
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 .tab-item:hover {
   color: var(--color-text);
-  background: color-mix(in oklab, var(--color-accent) 8%, transparent);
+  background: color-mix(in oklab, var(--color-text) 6%, transparent);
 }
 .tab-item.tab-active {
-  background: var(--color-bg);
+  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
   color: var(--color-text);
   box-shadow:
-    inset 1px 0 0 var(--color-border),
-    inset -1px 0 0 var(--color-border),
-    inset 0 1px 0 var(--color-border);
-}
-.tab-item.tab-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 2px;
-  background: var(--color-accent);
-  box-shadow: 0 0 8px var(--color-accent); /* matrix glow */
+    inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 35%, transparent),
+    0 0 16px -8px color-mix(in oklab, var(--color-accent) 60%, transparent);
 }
 
 /* Resize handle — only visible on hover, always 1px */
@@ -1224,7 +1248,7 @@
   right: 12px;
   width: 38px;
   height: 8px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 8'><circle cx='4' cy='4' r='2.5' fill='none' stroke='%2300ffff' stroke-width='1' opacity='0.32'/><circle cx='19' cy='4' r='2.5' fill='none' stroke='%2300ffff' stroke-width='1' opacity='0.32'/><circle cx='34' cy='4' r='2.5' fill='none' stroke='%2300ffff' stroke-width='1' opacity='0.32'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 8'><circle cx='4' cy='4' r='2.5' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.28'/><circle cx='19' cy='4' r='2.5' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.28'/><circle cx='34' cy='4' r='2.5' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.28'/></svg>");
   background-repeat: no-repeat;
   background-position: top right;
   pointer-events: none;
@@ -1441,31 +1465,67 @@
   margin-bottom: 0;
 }
 
-/* ─── Lists — default marker color, rem rhythm ──────────────── */
+/* ─── Lists — custom counter markers for perfect baseline alignment
+   Native ::marker has notorious cross-browser quirks: marker line-box
+   doesn't always match the first-line baseline of the text, and inline
+   code chips inside the li can visually offset the line. Custom ::before
+   markers with absolute positioning sit exactly at top:0 of the li (same
+   as the first line of text when li > p margin is zeroed), giving
+   pixel-perfect alignment. */
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
-  padding-left: 1.6rem;
+  list-style: none;
+  padding-left: 1.7rem;
   margin: 0.4rem 0;
 }
-.milkdown .ProseMirror ul {
-  list-style: disc;
-}
 .milkdown .ProseMirror ol {
-  list-style: decimal;
+  counter-reset: mf-ol;
 }
 .milkdown .ProseMirror li {
+  position: relative;
   margin: 0.12rem 0;
 }
-.milkdown .ProseMirror ul li::marker {
-  color: var(--color-text-subtle);
+.milkdown .ProseMirror ol > li {
+  counter-increment: mf-ol;
 }
-.milkdown .ProseMirror ol li::marker {
+.milkdown .ProseMirror ol > li::before {
+  content: counter(mf-ol) ".";
+  position: absolute;
+  left: -1.7rem;
+  top: 0;
+  width: 1.3rem;
+  padding-right: 0.4rem;
+  text-align: right;
   color: var(--color-text-muted);
   font-feature-settings: "tnum";
   font-weight: 500;
+  font-size: inherit;
+  line-height: inherit;
+  pointer-events: none;
 }
+.milkdown .ProseMirror ul > li::before {
+  content: "•";
+  position: absolute;
+  left: -1.7rem;
+  top: 0;
+  width: 1.3rem;
+  padding-right: 0.4rem;
+  text-align: center;
+  color: var(--color-text-subtle);
+  font-size: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+/* Kill p margins inside list items so the first text line sits at the
+   li's top (matching ::before's top:0). Multi-paragraph items keep a
+   small gap between consecutive paragraphs. */
 .milkdown .ProseMirror li > p {
-  margin: 0.12rem 0;
+  margin: 0;
+}
+.milkdown .ProseMirror li > p + p,
+.milkdown .ProseMirror li > p + ul,
+.milkdown .ProseMirror li > p + ol {
+  margin-top: 0.3rem;
 }
 .milkdown .ProseMirror ul ul,
 .milkdown .ProseMirror ol ol,
@@ -1485,6 +1545,10 @@
   margin-left: -1.5em;
   display: flex;
   align-items: flex-start;
+}
+/* Suppress the custom bullet ::before — checkbox takes the marker slot */
+.milkdown .ProseMirror ul > li[data-task-list-item]::before {
+  display: none;
 }
 .milkdown .ProseMirror ul li[data-task-list-item] > input[type="checkbox"] {
   /* (font 15px * line-height 1.45 = 21.75px line) - 13px box = 8.75px slack,

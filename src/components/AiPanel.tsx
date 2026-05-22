@@ -205,7 +205,7 @@ export function AiPanel() {
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-3 pb-2">
         {notConfigured && (
-          <div className="mt-4 p-3 rounded-sm bg-[var(--md-amber-soft)] text-[12.5px] leading-relaxed">
+          <div className="mt-4 p-3 rounded-xl bg-[var(--md-amber-soft)] text-[12.5px] leading-relaxed">
             <div className="font-medium mb-1">尚未配置对话模型</div>
             <button
               onClick={() => setSettingsOpen(true)}
@@ -228,7 +228,7 @@ export function AiPanel() {
                 <button
                   key={s}
                   onClick={() => setInput(s)}
-                  className="text-[12px] text-left px-2.5 py-1.5 rounded-sm bg-[var(--color-bg)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
+                  className="text-[12px] text-left px-3 py-2 rounded-xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
                 >
                   {s}
                 </button>
@@ -271,7 +271,7 @@ export function AiPanel() {
             {aiPending ? (
               <button
                 onClick={stop}
-                className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-sm bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:opacity-85"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] rounded-lg bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:opacity-85"
               >
                 <Square size={10} fill="currentColor" />
                 停止
@@ -280,7 +280,7 @@ export function AiPanel() {
               <button
                 onClick={send}
                 disabled={!canSend}
-                className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-sm font-medium bg-[var(--color-accent)] text-black disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] rounded-lg font-medium bg-[var(--color-accent)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
               >
                 发送
                 <Send size={10} strokeWidth={2} />
@@ -310,7 +310,7 @@ function ContextChip({
       disabled={disabled}
       className={`text-[10.5px] px-2 py-0.5 rounded-full border transition-colors ${
         active
-          ? "bg-[var(--color-accent)] text-black border-transparent font-medium"
+          ? "bg-[var(--color-accent)] text-white border-transparent font-medium"
           : "bg-transparent border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
       } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
     >
@@ -354,7 +354,7 @@ function Message({
         </span>
       </div>
       {isUser ? (
-        <div className="text-[12.5px] leading-relaxed whitespace-pre-wrap break-words rounded-sm bg-[var(--color-bg)] px-2.5 py-1.5 text-[var(--color-text)]">
+        <div className="text-[12.5px] leading-relaxed whitespace-pre-wrap break-words rounded-2xl bg-[var(--color-bg-muted)] px-3 py-2 text-[var(--color-text)] border border-[var(--glass-border,var(--color-border))]">
           {message.content}
         </div>
       ) : (

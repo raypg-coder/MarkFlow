@@ -90,7 +90,7 @@ export function SelectionMenu({ containerRef }: { containerRef: React.RefObject<
       style={{ left: x, top: y }}
       onMouseDown={(e) => e.preventDefault() /* keep selection */}
     >
-      <div className="flex items-stretch bg-[var(--color-bg)] border border-[var(--color-border)] rounded-sm shadow-lg shadow-black/10 overflow-hidden text-[var(--color-text-muted)]">
+      <div className="flex items-stretch bg-[var(--color-bg-soft)] border border-[var(--color-border)] rounded-xl shadow-2xl shadow-black/30 overflow-hidden text-[var(--color-text-muted)]">
         <button
           onClick={() => trigger("explain")}
           title="解释"
@@ -129,7 +129,7 @@ export function SelectionMenu({ containerRef }: { containerRef: React.RefObject<
       </div>
       {/* small arrow */}
       <div
-        className="absolute left-1/2 top-full -translate-x-1/2 w-2 h-2 bg-[var(--color-bg)] border-r border-b border-[var(--color-border)]"
+        className="absolute left-1/2 top-full -translate-x-1/2 w-2 h-2 bg-[var(--color-bg-soft)] border-r border-b border-[var(--color-border)]"
         style={{ transform: "translateX(-50%) rotate(45deg)", marginTop: "-4px" }}
       />
     </div>

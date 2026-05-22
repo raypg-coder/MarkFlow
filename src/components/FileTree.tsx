@@ -121,7 +121,7 @@ function Row({ node, depth }: RowProps) {
     <>
       <div
         className={clsx(
-          "scan-row group flex items-center gap-1.5 pr-2 py-[5px] cursor-pointer text-[13px] select-none rounded-sm mx-1",
+          "scan-row group flex items-center gap-1.5 pr-2 py-[5px] cursor-pointer text-[13px] select-none rounded-md mx-1",
           fileStatus === "mod" && "row-mod",
           isActive ? "is-active" : "text-[var(--color-text)] hover:bg-[var(--color-bg-soft)]",
         )}

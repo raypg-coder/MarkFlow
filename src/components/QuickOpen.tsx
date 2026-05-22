@@ -150,12 +150,12 @@ export function QuickOpen() {
       onClick={() => setQuickOpenVisible(false)}
     >
       <div
-        className="w-[560px] max-w-[92vw] bg-[var(--color-bg)] rounded-sm overflow-hidden"
+        className="w-[560px] max-w-[92vw] bg-[var(--color-bg-soft)] rounded-xl overflow-hidden"
         style={{
           boxShadow: `
-            inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 40%, transparent),
-            0 0 32px -8px color-mix(in oklab, var(--color-accent) 30%, transparent),
-            0 24px 48px rgba(0,0,0,0.6)
+            inset 0 0 0 1px var(--glass-border),
+            0 0 40px -8px color-mix(in oklab, var(--color-accent) 28%, transparent),
+            0 32px 64px rgba(0,0,0,0.55)
           `,
         }}
         onClick={(e) => e.stopPropagation()}
