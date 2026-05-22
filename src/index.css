@@ -57,11 +57,12 @@
     color-scheme: dark;
     /* —— Modern productivity glass aesthetic
        Inspired by Linear / Notion / contemporary dashboards.
-       Deep navy-purple gradient base, soft blue+purple accents,
-       glass surfaces with subtle backdrop blur. */
-    --color-bg: #0c0e1f;          /* deep navy base */
-    --color-bg-soft: #161834;     /* panel surface */
-    --color-bg-muted: #1e2147;    /* elevated / active */
+       Deep navy-purple base, soft blue+purple accents, OS-native
+       NSVisualEffectView vibrancy behind everything (macOS).
+       --color-bg is translucent so editor area sits over the OS frost. */
+    --color-bg: rgba(12, 14, 31, 0.78);  /* translucent navy over vibrancy */
+    --color-bg-soft: #161834;            /* solid — for popovers/modals */
+    --color-bg-muted: #1e2147;           /* solid — elevated/active */
     --color-border: #2a2e52;
     --color-border-strong: #3d4170;
 
@@ -70,8 +71,9 @@
     --color-text-muted: #a0a4c0;  /* meta — passes AAA */
     --color-text-subtle: #696e8c; /* tertiary — passes AA */
 
-    /* Chrome shares the navy base — glass effects do the depth instead */
-    --color-bg-chrome: #0a0c1a;
+    /* Chrome is fully transparent — NSVisualEffectView vibrancy fills it.
+       Topbar/statusbar/sidebars each layer their own glass gradient on top. */
+    --color-bg-chrome: transparent;
     --chrome-bg-soft: var(--color-bg-soft);
     --chrome-bg-muted: var(--color-bg-muted);
     --chrome-border: var(--color-border);
@@ -122,6 +124,12 @@
     font-feature-settings: "calt" 1, "ss01" 1, "ss02" 1, "ss03" 1;
     position: relative;
   }
+  /* macOS NSVisualEffectView vibrancy fills behind the window. The body
+     and editor area apply a slight navy tint over the OS frost so text
+     stays readable on busy wallpapers, but the frosted glass still shines
+     through visibly at chrome zones. */
+  :root.dark body { background: rgba(12, 14, 31, 0.62); }
+  :root:not(.dark) body { background: rgba(250, 250, 247, 0.85); }
   /* ─── Ambient gradient overlay (dark mode only)
      Soft blue + purple radial glows at corners give the navy bg the
      "modern dashboard" depth from the reference. Sits behind all UI
@@ -185,10 +193,12 @@
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
 }
+/* In dark mode the window has NSVisualEffectView vibrancy. We KEEP the
+   app shell transparent so the OS frosted glass actually shows through —
+   chrome panels (topbar/statusbar/sidebars) and the editor area each apply
+   their own translucent tints on top. */
 :root.dark .app-chrome {
-  background: rgba(10, 12, 26, 0.6);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  background: transparent;
 }
 .app-topbar {
   background: var(--color-bg-chrome);

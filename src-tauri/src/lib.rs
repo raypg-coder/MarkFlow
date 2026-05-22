@@ -136,6 +136,25 @@ pub fn run() {
             link_graph::list_md_files_meta,
             link_graph::git_status,
         ])
+        .setup(|_app| {
+            // macOS: apply NSVisualEffectView for true frosted-glass behind the
+            // window. The desktop wallpaper / apps below blur through, which
+            // is what gives chrome panels actual "glass" look (vs flat color).
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::Manager;
+                use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
+                if let Some(window) = _app.get_webview_window("main") {
+                    let _ = apply_vibrancy(
+                        &window,
+                        NSVisualEffectMaterial::HudWindow,
+                        Some(NSVisualEffectState::Active),
+                        Some(12.0),  // corner radius
+                    );
+                }
+            }
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

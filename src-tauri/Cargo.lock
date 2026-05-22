@@ -3660,7 +3660,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-app"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "serde",
  "serde_json",
@@ -3671,6 +3671,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-process",
  "tauri-plugin-updater",
+ "window-vibrancy",
 ]
 
 [[package]]
