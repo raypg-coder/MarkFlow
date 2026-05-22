@@ -1,8 +1,21 @@
 import type { FileKind } from "../types";
 
+/** Matches all env-style config files: .env, .env.local, .env.production,
+ *  .env-local, .envrc (direnv), .flaskenv. All get the env stream language. */
+export function isEnvFile(name: string): boolean {
+  const lower = name.toLowerCase();
+  return (
+    lower === ".env" ||
+    lower === ".envrc" ||
+    lower === ".flaskenv" ||
+    lower.startsWith(".env.") ||
+    lower.startsWith(".env-")
+  );
+}
+
 export function detectKind(name: string): FileKind {
   const lower = name.toLowerCase();
-  if (lower === ".env" || lower.startsWith(".env.")) return "env";
+  if (isEnvFile(lower)) return "env";
   const dot = lower.lastIndexOf(".");
   if (dot === -1) return "text";
   const ext = lower.slice(dot + 1);

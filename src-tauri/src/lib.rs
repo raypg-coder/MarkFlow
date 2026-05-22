@@ -12,9 +12,19 @@ struct FileNode {
     children: Option<Vec<FileNode>>,
 }
 
+/// True for env-style files: .env, .env.local, .env-prod, .envrc, .flaskenv.
+/// These dotfiles are NOT hidden by the tree builder.
+fn is_env_file(name: &str) -> bool {
+    name == ".env"
+        || name == ".envrc"
+        || name == ".flaskenv"
+        || name.starts_with(".env.")
+        || name.starts_with(".env-")
+}
+
 fn build_tree(path: &Path, depth: usize) -> Option<FileNode> {
     let name = path.file_name()?.to_string_lossy().to_string();
-    if name.starts_with('.') && name != ".env" && !name.starts_with(".env.") {
+    if name.starts_with('.') && !is_env_file(&name) {
         return None;
     }
     let path_str = path.to_string_lossy().to_string();
@@ -68,7 +78,7 @@ fn search_in_dir(
     for entry in entries.flatten() {
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') && name != ".env" && !name.starts_with(".env.") {
+        if name.starts_with('.') && !is_env_file(&name) {
             continue;
         }
         if path.is_dir() {
@@ -78,7 +88,7 @@ fn search_in_dir(
             search_in_dir(&path, needle, hits, depth + 1);
         } else {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            let is_env = name == ".env" || name.starts_with(".env.");
+            let is_env = is_env_file(&name);
             let editable = matches!(ext, "md" | "markdown" | "txt" | "py" | "go" | "env" | "json" | "yml" | "yaml" | "toml" | "ini" | "cfg" | "log" | "css" | "html" | "js" | "ts" | "tsx" | "jsx" | "mjs" | "cjs" | "sql" | "rs" | "sh") || is_env;
             if !editable {
                 continue;
