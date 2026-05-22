@@ -990,9 +990,9 @@
    that it doesn't compete with H1.
    ============================================================ */
 .md-doc-header {
-  max-width: 1080px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 22px clamp(24px, 6vw, 96px) 0;
+  padding: 22px clamp(24px, 5vw, 120px) 0;
   box-sizing: content-box;
   display: flex;
   align-items: center;
@@ -1060,11 +1060,12 @@
   --crepe-font-code: "SF Mono", "JetBrains Mono", Menlo, Monaco, monospace;
 }
 .milkdown .ProseMirror {
-  /* Adaptive width: side padding grows with the viewport; content max
-     caps at 1080px so a 27" monitor doesn't render a wall-of-text line.
-     On narrow windows + sidebars open it'll be parent-width minus padding. */
-  padding: 18px clamp(24px, 6vw, 96px) 120px;
-  max-width: 1080px;
+  /* Adaptive width with generous cap. On a 2K monitor with both sidebars
+     open, the editor area is ~1800px and we want content to actually use
+     most of it. Cap at 1500 still keeps single-line text readable
+     (~110ch at 15px). On smaller windows it tracks parent width. */
+  padding: 18px clamp(24px, 5vw, 120px) 120px;
+  max-width: 1500px;
   margin: 0 auto;
   outline: none;
   min-height: 60vh;
@@ -1892,9 +1893,9 @@ milkdown-toolbar button.active,
   font-weight: 600;
 }
 .md-fallback-wrap {
-  max-width: 1080px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 18px clamp(24px, 6vw, 96px) 120px;
+  padding: 18px clamp(24px, 5vw, 120px) 120px;
   box-sizing: content-box;
 }
 .md-fallback-banner {
