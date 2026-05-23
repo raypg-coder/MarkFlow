@@ -8,11 +8,10 @@ export function StatusBar() {
 
   if (!file) {
     return (
-      <div className="app-statusbar chrome-fade chrome-fade-bottom h-6 flex items-center px-3 text-[10.5px] gap-3">
-        <span className="text-[var(--chrome-accent)] font-mono">▎</span>
-        <span className="geek-label">idle</span>
+      <div className="app-statusbar chrome-fade chrome-fade-bottom h-7 flex items-center px-4 text-[11px] gap-3">
+        <span className="text-[var(--chrome-text-subtle)]">idle</span>
         <span className="flex-1" />
-        <span className="text-[var(--chrome-text-subtle)] font-mono">markflow</span>
+        <span className="text-[var(--chrome-text-subtle)]">MarkFlow</span>
         <Sep />
         <AudioControl />
         <Sep />
@@ -26,26 +25,20 @@ export function StatusBar() {
   const chars = file.content.length;
 
   return (
-    <div className="app-statusbar chrome-fade chrome-fade-bottom h-6 flex items-center px-3 text-[10.5px] gap-0">
-      {/* leading accent bar */}
-      <span
-        className="text-[var(--chrome-accent)] font-mono mr-2"
-        style={{ textShadow: "0 0 6px color-mix(in oklab, var(--color-accent) 60%, transparent)" }}
-      >▎</span>
-      {/* path */}
+    <div className="app-statusbar chrome-fade chrome-fade-bottom h-7 flex items-center px-4 text-[11px] gap-0">
+      {/* file path — clean sans, muted */}
       <span className="truncate flex-1 text-[var(--chrome-text-muted)]" title={file.path}>
         {file.path}
       </span>
-      {/* divider */}
       <Sep />
       <span className="pill pill-info">{file.kind}</span>
       <Sep />
-      <span className="mono-num text-[var(--chrome-text)]">
+      <span className="text-[var(--chrome-text)] tabular-nums">
         {lines}
         <span className="text-[var(--chrome-text-subtle)] ml-0.5">L</span>
       </span>
       <Sep />
-      <span className="mono-num text-[var(--chrome-text)]">
+      <span className="text-[var(--chrome-text)] tabular-nums">
         {chars}
         <span className="text-[var(--chrome-text-subtle)] ml-0.5">B</span>
       </span>
@@ -64,7 +57,7 @@ export function StatusBar() {
 }
 
 function Sep() {
-  return <span className="text-[var(--chrome-text-subtle)] mx-2 font-mono">│</span>;
+  return <span className="text-[var(--chrome-text-subtle)] mx-2.5 opacity-40">·</span>;
 }
 
 /**
@@ -100,7 +93,7 @@ function UpdatePill({
     return (
       <button
         onClick={onClick}
-        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-full text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
+        className="update-pill text-[10.5px] px-2 py-0.5 rounded-full text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)] tabular-nums"
         title={`新版本 v${info.version} 可用 — 点击下载并安装`}
         style={{
           animation: "update-pulse 2s ease-in-out infinite",
@@ -119,7 +112,7 @@ function UpdatePill({
     const pct = state.total > 0 ? Math.floor((state.downloaded / state.total) * 100) : 0;
     return (
       <span
-        className="font-mono text-[10px] text-[var(--color-accent)] px-1.5"
+        className="text-[10.5px] text-[var(--color-accent)] px-2 tabular-nums"
         title={`正在下载 v${state.info.version}…`}
       >
         ↓ {pct}%
@@ -131,7 +124,7 @@ function UpdatePill({
     return (
       <button
         onClick={() => restartApp().catch(() => {})}
-        className="update-pill font-mono text-[10px] px-1.5 py-0.5 rounded-full text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
+        className="update-pill text-[10.5px] px-2 py-0.5 rounded-full text-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_14%,transparent)]"
         title={`v${state.info.version} 已就绪 — 点击重启应用`}
         style={{
           animation: "update-pulse 1.6s ease-in-out infinite",
@@ -146,7 +139,7 @@ function UpdatePill({
   // Default: idle / checking / uptodate / error → quiet version label
   return (
     <span
-      className="font-mono text-[10px] text-[var(--chrome-text-subtle)]"
+      className="text-[10.5px] text-[var(--chrome-text-subtle)] tabular-nums"
       title={
         state.kind === "checking"
           ? "正在检查更新…"

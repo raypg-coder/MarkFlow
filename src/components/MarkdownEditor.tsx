@@ -4,6 +4,7 @@ import { editorViewCtx } from "@milkdown/kit/core";
 import { replaceAll } from "@milkdown/utils";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
+import "katex/dist/katex.min.css";
 // marked is only used on the rare Crepe-parse-failure fallback path.
 // Dynamic import keeps its ~50KB out of the main bundle for the 99% case.
 const getMarked = () => import("marked").then((m) => m.marked);
@@ -12,6 +13,7 @@ import { renderEmbeds, reinitMermaidTheme, renderFallbackEmbeds } from "../utils
 import { sanitizeForCrepe } from "../utils/sanitize";
 import { wikilinkPlugin } from "../utils/milkdown-wikilink";
 import { imageGenPlugin } from "../utils/milkdown-image-gen";
+import { tagPlugin } from "../utils/milkdown-tag";
 import { SelectionMenu } from "./SelectionMenu";
 import { AmbientLight } from "./AmbientLight";
 
@@ -172,6 +174,7 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
     try {
       crepe.editor.use(wikilinkPlugin);
       crepe.editor.use(imageGenPlugin);
+      crepe.editor.use(tagPlugin);
     } catch (e) {
       console.warn("[MarkdownEditor] failed to register plugins", e);
     }
@@ -382,7 +385,10 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
             />
           </div>
         ) : (
-          <div ref={editorMountRef} />
+          <>
+            <div ref={editorMountRef} />
+            <InDocBacklinks filePath={filePath} />
+          </>
         )}
       </div>
       {!fallback && (
@@ -391,6 +397,73 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
           <AmbientLight containerRef={editorMountRef} />
         </>
       )}
+    </div>
+  );
+}
+
+/** In-doc backlinks footer — auto-shows below the markdown content when the
+ *  current file is referenced by other notes (via wikilinks or md links).
+ *  Reuses the same `get_backlinks` Rust command that powers the side panel. */
+function InDocBacklinks({ filePath }: { filePath: string }) {
+  const { backlinks, backlinksTarget, loadBacklinks, openFile } = useStore();
+  useEffect(() => {
+    if (!filePath) return;
+    // Reuse the panel's cache when the active doc matches what's already loaded
+    if (backlinksTarget !== filePath) {
+      loadBacklinks(filePath).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filePath]);
+
+  // Only render when we have backlinks AND they target the current file
+  if (backlinksTarget !== filePath || !backlinks.length) return null;
+
+  // Group by source file
+  const grouped = new Map<string, typeof backlinks>();
+  backlinks.forEach((b) => {
+    const arr = grouped.get(b.source) ?? [];
+    arr.push(b);
+    grouped.set(b.source, arr);
+  });
+  const sources = Array.from(grouped.keys()).sort();
+
+  return (
+    <div className="indoc-backlinks">
+      <div className="indoc-backlinks-title">
+        <span>反链 · {backlinks.length} 处</span>
+      </div>
+      <div className="indoc-backlinks-list">
+        {sources.map((src) => {
+          const items = grouped.get(src) ?? [];
+          const name = src.split(/[\\/]/).pop() ?? src;
+          return (
+            <div key={src} className="indoc-backlinks-group">
+              <button
+                onClick={() => openFile(src, name)}
+                className="indoc-backlinks-source"
+                title={src}
+              >
+                {name.replace(/\.(md|markdown)$/i, "")}
+                <span className="indoc-backlinks-count">{items.length}</span>
+              </button>
+              {items.slice(0, 3).map((b, i) => (
+                <button
+                  key={i}
+                  onClick={() => openFile(src, name)}
+                  className="indoc-backlinks-snippet"
+                  title={`L${b.line}`}
+                >
+                  <span className="indoc-backlinks-line">L{b.line}</span>
+                  <span className="indoc-backlinks-preview">{b.preview}</span>
+                </button>
+              ))}
+              {items.length > 3 && (
+                <div className="indoc-backlinks-more">…还有 {items.length - 3} 处</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

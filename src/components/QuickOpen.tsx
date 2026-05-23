@@ -63,7 +63,7 @@ function fuzzyMatch(query: string, text: string): { score: number; matches: numb
 const MAX_RESULTS = 12;
 
 export function QuickOpen() {
-  const { quickOpenVisible, setQuickOpenVisible, roots, openFile } = useStore();
+  const { quickOpenVisible, setQuickOpenVisible, roots, openFile, recentFiles } = useStore();
   const [allFiles, setAllFiles] = useState<MdFileMeta[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
@@ -90,6 +90,19 @@ export function QuickOpen() {
 
   const results = useMemo<ScoredFile[]>(() => {
     if (!quickOpenVisible) return [];
+    // Empty query → show recently opened files (newest first)
+    if (!query.trim()) {
+      const knownPaths = new Set(allFiles.map((f) => f.path));
+      return recentFiles
+        .filter((p) => knownPaths.has(p))      // filter dead links
+        .slice(0, MAX_RESULTS)
+        .map((path) => ({
+          path,
+          name: path.split(/[\\/]/).pop() || path,
+          score: 0,
+          matches: [],
+        }));
+    }
     const list: ScoredFile[] = [];
     for (const f of allFiles) {
       const name = f.path.split(/[\\/]/).pop() || f.path;
@@ -99,7 +112,7 @@ export function QuickOpen() {
     }
     list.sort((a, b) => b.score - a.score);
     return list.slice(0, MAX_RESULTS);
-  }, [quickOpenVisible, query, allFiles]);
+  }, [quickOpenVisible, query, allFiles, recentFiles]);
 
   // Reset selection when results shrink below current index
   useEffect(() => {
@@ -160,8 +173,7 @@ export function QuickOpen() {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--color-border)]">
-          <span className="font-mono text-[10px] text-[var(--color-text-subtle)] tracking-wider">[open]</span>
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[var(--glass-border,var(--color-border))]">
           <input
             ref={inputRef}
             type="text"
@@ -171,18 +183,27 @@ export function QuickOpen() {
               setSelected(0);
             }}
             onKeyDown={onKey}
-            placeholder="按名称搜索 markdown 文件…"
-            className="flex-1 bg-transparent outline-none font-mono text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)]"
+            placeholder="搜索文件，或留空查看最近打开…"
+            className="flex-1 bg-transparent outline-none text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)]"
           />
-          <span className="font-mono text-[10px] text-[var(--color-text-subtle)] tabular-nums">
+          <span className="text-[10px] text-[var(--color-text-subtle)] tabular-nums">
             {results.length}/{allFiles.length}
           </span>
         </div>
 
         <div ref={listRef} className="max-h-[52vh] overflow-y-auto">
+          {!query.trim() && results.length > 0 && (
+            <div className="px-4 py-1.5 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-subtle)] font-semibold">
+              最近打开
+            </div>
+          )}
           {results.length === 0 && (
-            <div className="px-4 py-6 text-center text-[12px] text-[var(--color-text-subtle)] font-mono">
-              {allFiles.length === 0 ? "工作区里没有 markdown 文件" : "没有匹配的文件"}
+            <div className="px-4 py-6 text-center text-[12px] text-[var(--color-text-subtle)]">
+              {allFiles.length === 0
+                ? "工作区里没有 markdown 文件"
+                : !query.trim()
+                ? "还没有最近打开的文件 — 输入名字搜索"
+                : "没有匹配的文件"}
             </div>
           )}
           {results.map((r, i) => {
@@ -207,7 +228,7 @@ export function QuickOpen() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span
-                    className={`font-mono text-[13px] truncate ${
+                    className={`text-[13px] truncate ${
                       active ? "text-[var(--color-text)]" : "text-[var(--color-text)]"
                     }`}
                   >
@@ -222,11 +243,11 @@ export function QuickOpen() {
           })}
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--color-border)] text-[10px] text-[var(--color-text-subtle)] font-mono">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-[var(--glass-border,var(--color-border))] text-[10.5px] text-[var(--color-text-subtle)]">
           <span>
-            <kbd className="kbd">↑↓</kbd> 移动 · <kbd className="kbd">↵</kbd> 打开 · <kbd className="kbd">esc</kbd> 关闭
+            <kbd className="kbd">↑↓</kbd> 移动 · <kbd className="kbd">↵</kbd> 打开 · <kbd className="kbd">Esc</kbd> 关闭
           </span>
-          <span>⌘P</span>
+          <span className="tabular-nums">⌘P</span>
         </div>
       </div>
     </div>

@@ -319,8 +319,17 @@ function App() {
       flushAllAutosaves();
       useStore.getState().saveAllDirty().catch(() => {});
     };
+    // Window regained focus → check if disk content for open files changed
+    // while we were in the background (typical for git pull / external edit).
+    const onFocus = () => {
+      useStore.getState().detectExternalChanges().catch(() => {});
+    };
     window.addEventListener("blur", onBlur);
-    return () => window.removeEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   // Native drag-drop: dropping .md / .txt / .json etc. files onto the window
@@ -406,7 +415,7 @@ function App() {
               <button
                 onClick={() => pickView("files")}
                 title="文件 (⌘1)"
-                className={`p-1.5 rounded-sm ${
+                className={`p-1.5 rounded-md ${
                   sidebarView === "files"
                     ? "bg-[var(--chrome-bg-soft)] text-[var(--chrome-accent)]"
                     : "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
@@ -417,7 +426,7 @@ function App() {
               <button
                 onClick={() => pickView("search")}
                 title="搜索 (⌘⇧F)"
-                className={`p-1.5 rounded-sm ${
+                className={`p-1.5 rounded-md ${
                   sidebarView === "search"
                     ? "bg-[var(--chrome-bg-soft)] text-[var(--chrome-accent)]"
                     : "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
@@ -428,7 +437,7 @@ function App() {
               <button
                 onClick={() => pickView("missions")}
                 title="missions"
-                className={`p-1.5 rounded-sm ${
+                className={`p-1.5 rounded-md ${
                   sidebarView === "missions"
                     ? "bg-[var(--chrome-bg-soft)] text-[var(--chrome-accent)]"
                     : "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
@@ -440,7 +449,7 @@ function App() {
             <button
               onClick={toggleSidebar}
               title="收起侧栏 (⌘\\)"
-              className="p-1.5 rounded-sm mr-1.5 text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
+              className="p-1.5 rounded-md mr-1.5 text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
             >
               <PanelLeftClose size={15} strokeWidth={1.75} />
             </button>
@@ -456,7 +465,7 @@ function App() {
                 <button
                   onClick={toggleSidebar}
                   title="展开侧栏 (⌘\\)"
-                  className="p-1.5 rounded-sm text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
+                  className="p-1.5 rounded-md text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
                 >
                   <PanelLeftOpen size={15} strokeWidth={1.75} />
                 </button>
@@ -466,7 +475,7 @@ function App() {
               onClick={() => useStore.getState().navBack()}
               disabled={!canBack}
               title="后退"
-              className={`p-1.5 rounded-sm ${
+              className={`p-1.5 rounded-md ${
                 canBack
                   ? "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
                   : "text-[var(--chrome-text-subtle)] cursor-not-allowed"
@@ -478,7 +487,7 @@ function App() {
               onClick={() => useStore.getState().navForward()}
               disabled={!canForward}
               title="前进"
-              className={`p-1.5 rounded-sm ${
+              className={`p-1.5 rounded-md ${
                 canForward
                   ? "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
                   : "text-[var(--chrome-text-subtle)] cursor-not-allowed"
@@ -500,7 +509,7 @@ function App() {
               }}
               title="保存 (⌘S)"
               disabled={!canSave}
-              className={`p-1.5 rounded-sm ${
+              className={`p-1.5 rounded-md ${
                 canSave
                   ? "text-[var(--chrome-accent)] hover:bg-[var(--chrome-bg-soft)]"
                   : "text-[var(--chrome-text-subtle)] cursor-not-allowed"
@@ -513,7 +522,7 @@ function App() {
                 onClick={() => setShowExportMenu((v) => !v)}
                 disabled={!canExport}
                 title="导出 (仅 Markdown)"
-                className={`p-1.5 rounded-sm ${
+                className={`p-1.5 rounded-md ${
                   canExport
                     ? "hover:bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                     : "text-[var(--chrome-text-subtle)] cursor-not-allowed"
@@ -524,9 +533,18 @@ function App() {
               {showExportMenu && canExport && activeFile && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1.5 z-50 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-sm shadow-lg shadow-black/5 py-1 min-w-[140px]">
+                  <div
+                    className="absolute right-0 top-full mt-1.5 z-50 bg-[var(--color-bg-soft)] rounded-xl py-1.5 min-w-[150px]"
+                    style={{
+                      boxShadow: `
+                        inset 0 0 0 1px var(--glass-border),
+                        0 8px 24px rgba(0, 0, 0, 0.4),
+                        0 20px 48px rgba(0, 0, 0, 0.35)
+                      `,
+                    }}
+                  >
                     <button
-                      className="block w-full text-left px-3 py-1.5 text-[12.5px] hover:bg-[var(--color-bg-soft)]"
+                      className="block w-full text-left px-3.5 py-1.5 mx-1 rounded-md text-[12.5px] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
                       onClick={async () => {
                         setShowExportMenu(false);
                         await exportMarkdownToHtml(activeFile.name, activeFile.content);
@@ -535,7 +553,7 @@ function App() {
                       导出为 HTML
                     </button>
                     <button
-                      className="block w-full text-left px-3 py-1.5 text-[12.5px] hover:bg-[var(--color-bg-soft)]"
+                      className="block w-full text-left px-3.5 py-1.5 mx-1 rounded-md text-[12.5px] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
                       onClick={async () => {
                         setShowExportMenu(false);
                         await exportMarkdownToPdf(activeFile.name, activeFile.content);
@@ -551,7 +569,7 @@ function App() {
               <button
                 onClick={toggleRightSidebar}
                 title="展开右侧栏"
-                className="p-1.5 rounded-sm text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
+                className="p-1.5 rounded-md text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
               >
                 <PanelRightOpen size={15} strokeWidth={1.75} />
               </button>
@@ -565,7 +583,7 @@ function App() {
             <button
               onClick={toggleRightSidebar}
               title="收起右侧栏"
-              className="p-1.5 rounded-sm ml-1.5 text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
+              className="p-1.5 rounded-md ml-1.5 text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
             >
               <PanelRightClose size={15} strokeWidth={1.75} />
             </button>
@@ -583,7 +601,7 @@ function App() {
                   key={view}
                   onClick={() => setRightSidebarView(view)}
                   title={title}
-                  className={`p-1.5 rounded-sm shrink-0 ${
+                  className={`p-1.5 rounded-md shrink-0 ${
                     rightSidebarView === view
                       ? "bg-[var(--chrome-bg-soft)] text-[var(--chrome-accent)]"
                       : "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
@@ -671,7 +689,69 @@ function App() {
       <CloseDirtyDialog />
       <QuickOpen />
       <ImageGenToast />
+      <ExternalChangeToast />
       <div className="focus-mode-indicator" />
+    </div>
+  );
+}
+
+/** Banner shown when an open dirty file was modified externally while
+ *  we were in the background. Lets user reload disk content (discard
+ *  local changes) or keep their version (which will overwrite on save). */
+function ExternalChangeToast() {
+  const paths = useStore((s) => s.externalChangedPaths);
+  const resolveExternalChange = useStore((s) => s.resolveExternalChange);
+  if (!paths.length) return null;
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[95] max-w-[520px] w-[92vw]">
+      <div
+        className="bg-[var(--color-bg-soft)] rounded-xl px-4 py-3"
+        style={{
+          boxShadow: `
+            inset 0 0 0 1px color-mix(in oklab, var(--color-warning) 30%, var(--glass-border)),
+            0 8px 24px rgba(0,0,0,0.4),
+            0 20px 48px rgba(0,0,0,0.3)
+          `,
+        }}
+      >
+        <div className="flex items-start gap-2.5">
+          <div className="w-2 h-2 mt-1.5 rounded-full bg-[var(--color-warning)] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-[12.5px] font-medium text-[var(--color-text)] mb-0.5">
+              {paths.length === 1 ? "文件被外部修改" : `${paths.length} 个文件被外部修改`}
+            </div>
+            <div className="text-[11.5px] text-[var(--color-text-muted)]">
+              你有未保存的本地修改。选择保留哪份。
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 space-y-1.5">
+          {paths.map((p) => {
+            const name = p.split(/[\\/]/).pop() ?? p;
+            return (
+              <div key={p} className="flex items-center gap-2 text-[12px]">
+                <span className="flex-1 truncate text-[var(--color-text-muted)]" title={p}>
+                  {name}
+                </span>
+                <button
+                  onClick={() => resolveExternalChange(p, "reload")}
+                  className="px-2.5 py-1 rounded-md text-[11px] text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_14%,transparent)]"
+                  title="放弃本地修改，加载磁盘最新版"
+                >
+                  加载磁盘
+                </button>
+                <button
+                  onClick={() => resolveExternalChange(p, "keep")}
+                  className="px-2.5 py-1 rounded-md text-[11px] text-[var(--color-text-muted)] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
+                  title="保留本地，下次保存覆盖磁盘"
+                >
+                  保留本地
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -683,11 +763,18 @@ function ImageGenToast() {
   return (
     <div className="fixed bottom-6 right-6 z-[90] max-w-[360px]">
       <div
-        className={`flex items-start gap-2.5 px-3 py-2.5 rounded-sm shadow-lg shadow-black/15 text-[12.5px] ${
+        className={`flex items-start gap-2.5 px-3.5 py-3 rounded-xl text-[12.5px] ${
           isError
-            ? "bg-[var(--md-rose-soft)] text-[var(--md-rose)] border border-[var(--md-rose)]/30"
-            : "bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-border)]"
+            ? "bg-[var(--md-rose-soft)] text-[var(--md-rose)]"
+            : "bg-[var(--color-bg-soft)] text-[var(--color-text)]"
         }`}
+        style={{
+          boxShadow: `
+            inset 0 0 0 1px var(--glass-border, ${isError ? "rgba(var(--md-rose-rgb,232,76,124),0.3)" : "rgba(255,255,255,0.08)"}),
+            0 8px 24px rgba(0,0,0,0.35),
+            0 20px 48px rgba(0,0,0,0.25)
+          `,
+        }}
       >
         {!isError && (
           <div className="w-3 h-3 mt-0.5 rounded-full border-2 border-[var(--color-accent)] border-t-transparent animate-spin" />

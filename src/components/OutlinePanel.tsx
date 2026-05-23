@@ -54,7 +54,7 @@ export function OutlinePanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 pt-3 pb-1">
+      <div className="px-4 pt-4 pb-2">
         <span className="geek-label">outline</span>
       </div>
       <div className="flex-1 overflow-y-auto pb-2">

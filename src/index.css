@@ -117,11 +117,12 @@
   body {
     background: var(--color-bg);
     color: var(--color-text);
-    font-family: var(--font-mono);
+    /* Chrome UI = sans (Inter). Code / mono-numeric = explicit font-mono. */
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-size: 13px;
-    letter-spacing: 0;
-    font-feature-settings: "calt" 1, "ss01" 1, "ss02" 1, "ss03" 1;
+    letter-spacing: -0.005em;
+    font-feature-settings: "cv11" 1, "ss01" 1;
     position: relative;
   }
   /* macOS NSVisualEffectView vibrancy fills behind the window. The body
@@ -230,6 +231,31 @@
   pointer-events: none;
 }
 :root.dark .app-topbar::after { display: none; }  /* glass border handles it */
+/* Light mode subtle glass — translucent white over cream */
+:root:not(.dark) .app-topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
+:root:not(.dark) .app-statusbar {
+  background: linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
+:root:not(.dark) .chrome-fade-left {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3)) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
+:root:not(.dark) .chrome-fade-right {
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3)) !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
 .app-panel {
   background: var(--color-bg);
 }
@@ -239,8 +265,8 @@
 .app-statusbar {
   background: var(--color-bg-chrome);
   color: var(--chrome-text-muted);
-  font-family: var(--font-mono);
-  font-feature-settings: "tnum" on;
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" on, "cv11" 1;
   position: relative;
 }
 :root.dark .app-statusbar {
@@ -288,15 +314,15 @@
 /* —— Atoms —— */
 
 /* Section label: [ files ]  /  [ outline ]  — replaces "资源管理器" style */
+/* Section title (used for [files] [search] [outline] etc. in panel headers) */
 .geek-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
   color: var(--color-text-subtle);
   text-transform: uppercase;
   font-weight: 600;
 }
-/* Brackets removed — clean caps label matches modern productivity aesthetic */
 
 /* On dark chrome contexts */
 .app-topbar .geek-label,
@@ -365,30 +391,26 @@
    strikethrough laser, energy bar, all-clear glitch
    ============================================================ */
 
-/* Mission card */
+/* Mission card — glass surface */
 .mission-card {
   position: relative;
-  background: color-mix(in oklab, var(--color-bg) 80%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-accent-2, var(--color-accent)) 22%, transparent);
-  border-radius: 2px;
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+  background: color-mix(in oklab, var(--color-text) 4%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-text) 8%, transparent);
+  border-radius: 12px;
+  transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+:root.dark .mission-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  border-color: var(--glass-border);
 }
 .mission-card:hover {
-  border-color: color-mix(in oklab, var(--color-accent-2, var(--color-accent)) 50%, transparent);
+  border-color: color-mix(in oklab, var(--color-accent) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 6%, transparent);
 }
+/* Critical priority — subtle red ring (no infinite breath) */
 .mission-card.priority-critical {
-  border-color: color-mix(in oklab, var(--color-danger) 40%, transparent);
-  animation: critical-breath 3s ease-in-out infinite;
-}
-@keyframes critical-breath {
-  0%, 100% {
-    box-shadow: 0 0 0 0 transparent;
-    border-color: color-mix(in oklab, var(--color-danger) 38%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 10px -2px color-mix(in oklab, var(--color-danger) 45%, transparent);
-    border-color: color-mix(in oklab, var(--color-danger) 75%, transparent);
-  }
+  border-color: color-mix(in oklab, var(--color-danger) 50%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-danger) 30%, transparent);
 }
 .mission-card.priority-high {
   border-color: color-mix(in oklab, var(--color-warning) 35%, transparent);
@@ -399,26 +421,38 @@
   animation: none !important;
 }
 
-/* Priority pills */
+/* Priority chips (v2) — Linear/Things style: small rounded tag, soft tinted bg */
+.priority-chip {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0;
+  user-select: none;
+  white-space: nowrap;
+}
+.priority-chip-on {
+  background: color-mix(in oklab, currentColor 14%, transparent);
+}
+.priority-chip-low    { color: var(--color-text-muted); }
+.priority-chip-mid    { color: var(--color-accent); }
+.priority-chip-high   { color: var(--color-warning); }
+.priority-chip-critical { color: var(--color-danger); }
+
+/* Legacy priority-pill (kept for compat — no usage in v2 components but
+   referenced by older missions/tests). Same look as priority-chip. */
 .priority-pill {
-  text-transform: lowercase;
-  letter-spacing: 0.06em;
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 999px;
   user-select: none;
 }
 .priority-pill.priority-on {
-  border: 1px solid currentColor;
-  background: color-mix(in oklab, currentColor 8%, transparent);
+  background: color-mix(in oklab, currentColor 14%, transparent);
 }
-.priority-low.priority-on    { color: var(--color-accent-2, var(--color-accent)); }
+.priority-low.priority-on    { color: var(--color-text-muted); }
 .priority-mid.priority-on    { color: var(--color-accent); }
 .priority-high.priority-on   { color: var(--color-warning); }
-.priority-critical.priority-on {
-  color: var(--color-danger);
-  animation: critical-breath 1.6s ease-in-out infinite;
-}
+.priority-critical.priority-on { color: var(--color-danger); }
 
 /* Round checkbox — soft blue when checked (modern productivity style) */
 .octagon-check {
@@ -468,81 +502,38 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Strikethrough laser — pink line sweeps in across the title */
-.mission-card.is-done .mission-title-wrap::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-accent-3, #ff007f) 8%,
-    var(--color-accent-3, #ff007f) 92%,
-    transparent
-  );
-  box-shadow: 0 0 4px var(--color-accent-3, #ff007f);
-  transform-origin: left center;
-  animation: strikethrough-sweep 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+/* Mission Card v2 — modern Linear/Things style, no glitch */
+.mission-card-v2 {
+  border-radius: 12px;
 }
-@keyframes strikethrough-sweep {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
-}
-.mission-card.is-done .mission-title {
-  position: relative;
-  z-index: 1;
-}
+.mission-card-v2 .mission-title-wrap::after { display: none; }
 
-/* Countdown — tiny jitter on each second tick (handled by re-render) */
-
-/* Energy bar */
-.energy-bar > div {
-  transition: background-color 350ms ease, box-shadow 350ms ease;
-}
-
-/* All-clear glitch overlay */
-@keyframes all-clear-glitch {
-  0%   { opacity: 0; transform: translate(-50%, -50%) skewX(0deg); }
-  5%   { opacity: 1; transform: translate(-50%, -50%) skewX(2deg); filter: hue-rotate(0deg); }
-  15%  { transform: translate(-49%, -50%) skewX(-1deg); filter: hue-rotate(20deg); }
-  25%  { transform: translate(-51%, -50%) skewX(1deg); filter: hue-rotate(-20deg); }
-  35%  { transform: translate(-50%, -50%) skewX(0deg); filter: hue-rotate(0deg); }
-  80%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -50%); }
-}
+/* All-clear toast — soft success badge slides in from bottom */
 .all-clear-overlay {
   position: fixed;
-  inset: 0;
-  pointer-events: none;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
   z-index: 95;
-  background: color-mix(in oklab, var(--color-success, #00ff66) 5%, transparent);
-  animation: all-clear-flash 1.6s ease-out forwards;
+  pointer-events: none;
+  animation: all-clear-slide 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-@keyframes all-clear-flash {
-  0%, 100% { background: transparent; }
-  4%       { background: color-mix(in oklab, var(--color-success, #00ff66) 18%, transparent); }
-  10%      { background: transparent; }
-  14%      { background: color-mix(in oklab, var(--color-success, #00ff66) 10%, transparent); }
-  20%      { background: transparent; }
+@keyframes all-clear-slide {
+  0%   { opacity: 0; transform: translate(-50%, 20px); }
+  15%  { opacity: 1; transform: translate(-50%, 0); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -8px); }
 }
 .all-clear-text {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--color-success, #00ff66);
-  text-shadow:
-    0 0 6px var(--color-success, #00ff66),
-    0 0 16px color-mix(in oklab, var(--color-success, #00ff66) 50%, transparent);
-  transform: translate(-50%, -50%);
-  animation: all-clear-glitch 1.6s ease-out forwards;
-  z-index: 96;
-  pointer-events: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-success);
+  background: color-mix(in oklab, var(--color-success) 18%, var(--color-bg-soft));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--color-success) 35%, transparent),
+    0 12px 32px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
 }
 
@@ -614,22 +605,14 @@
 .focus-mode .milkdown .ProseMirror ::selection {
   background: color-mix(in oklab, var(--color-accent-3, #ff007f) 28%, transparent);
 }
-/* Soft pink halo on the caret line — proxy for "neon cursor glow"
-   (native carets can't take box-shadow; this glows the line content) */
-@keyframes focus-caret-breath {
-  0%, 100% {
-    text-shadow: 0 0 0.5px color-mix(in oklab, var(--color-accent-3, #ff007f) 8%, transparent);
-  }
-  50% {
-    text-shadow: 0 0 6px color-mix(in oklab, var(--color-accent-3, #ff007f) 22%, transparent);
-  }
-}
+/* Focus halo — static soft accent shadow on the focused line.
+   Was infinite-breathing pink; now calm single-state glow. */
 .focus-mode .milkdown .ProseMirror .ProseMirror-selectednode,
 .focus-mode .milkdown .ProseMirror p:focus-within,
 .focus-mode .milkdown .ProseMirror h1:focus-within,
 .focus-mode .milkdown .ProseMirror h2:focus-within,
 .focus-mode .milkdown .ProseMirror h3:focus-within {
-  animation: focus-caret-breath 2.4s ease-in-out infinite;
+  text-shadow: 0 0 4px color-mix(in oklab, var(--color-accent) 18%, transparent);
 }
 
 /* ── Matrix Zen Mode — manual ⌘⇧Z, longer-stay than auto focus ── */
@@ -802,6 +785,29 @@
 :root.dark .scan-row.is-active {
   background: color-mix(in oklab, var(--color-accent) 18%, transparent) !important;
 }
+
+/* dnd-kit drop target — when dragging a file/folder over a directory */
+.row-drop-target {
+  background: color-mix(in oklab, var(--color-accent) 18%, transparent) !important;
+  box-shadow: inset 0 0 0 1.5px var(--color-accent),
+              0 0 0 3px color-mix(in oklab, var(--color-accent) 14%, transparent) !important;
+}
+
+/* Tab being dragged — slight lift + subtle shadow so it visually detaches */
+.tab-item.tab-dragging {
+  box-shadow:
+    inset 0 0 0 1px var(--color-accent),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: grabbing;
+}
+
+/* Mission card being dragged — same lift treatment */
+.mission-card.mission-card-dragging {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 60%, transparent),
+    0 8px 20px rgba(0, 0, 0, 0.35);
+  cursor: grabbing;
+}
 .scan-row.is-active::before {
   display: none;
 }
@@ -861,52 +867,39 @@
   font-size: 9px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  height: 14px;
-  min-width: 16px;
-  padding: 0 3px;
-  border-radius: 2px;
+  height: 16px;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
   user-select: none;
   margin-left: 4px;
   pointer-events: none;
 }
 .git-flag-new {
-  color: var(--color-accent-2, #00ffff);
-  background: color-mix(in oklab, var(--color-accent-2, #00ffff) 12%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent-2, #00ffff) 35%, transparent);
-  text-shadow: 0 0 4px color-mix(in oklab, var(--color-accent-2, #00ffff) 50%, transparent);
+  color: var(--color-success);
+  background: color-mix(in oklab, var(--color-success) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-success) 30%, transparent);
 }
 .git-flag-mod {
-  color: var(--color-accent-3, #ff2d92);
-  background: color-mix(in oklab, var(--color-accent-3, #ff2d92) 12%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent-3, #ff2d92) 40%, transparent);
-  text-shadow: 0 0 4px color-mix(in oklab, var(--color-accent-3, #ff2d92) 50%, transparent);
-  animation: git-mod-flash 1.6s ease-in-out infinite;
+  color: var(--color-warning);
+  background: color-mix(in oklab, var(--color-warning) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-warning) 30%, transparent);
 }
 .git-flag-del {
   color: var(--color-danger);
   background: color-mix(in oklab, var(--color-danger) 12%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-danger) 35%, transparent);
 }
-@keyframes git-mod-flash {
-  0%, 100% { opacity: 0.6; }
-  50%      { opacity: 1; }
-}
-
-/* File-icon energy breath — fires every 4s for modified files */
-@keyframes git-icon-breath {
-  0%, 84%, 100% { filter: none; transform: scale(1); }
-  90%           { filter: drop-shadow(0 0 6px var(--color-accent-3)); transform: scale(1.08); }
-  94%           { filter: drop-shadow(0 0 3px var(--color-accent-3)); transform: scale(1.02); }
-}
+/* Modified file icon — subtle tint via opacity, no animation */
 .row-mod .file-icon {
-  animation: git-icon-breath 4s ease-in-out infinite;
+  color: var(--color-warning);
 }
 
-/* Saving beam — cyan stripe sweeps left → right across the file row */
+/* Saving beam — soft accent stripe sweeps left → right across the file row */
 @keyframes saving-beam {
   0%   { transform: translateX(-100%); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
   100% { transform: translateX(100%); opacity: 0; }
 }
 .saving-beam {
@@ -915,22 +908,23 @@
   pointer-events: none;
   overflow: hidden;
   z-index: 2;
+  border-radius: inherit;
 }
 .saving-beam::after {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 32%;
+  width: 42%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in oklab, var(--color-accent-2, #00ffff) 18%, transparent) 40%,
-    color-mix(in oklab, var(--color-accent-2, #00ffff) 60%, transparent) 50%,
-    color-mix(in oklab, var(--color-accent-2, #00ffff) 18%, transparent) 60%,
+    color-mix(in oklab, var(--color-accent) 14%, transparent) 35%,
+    color-mix(in oklab, var(--color-accent) 38%, transparent) 50%,
+    color-mix(in oklab, var(--color-accent) 14%, transparent) 65%,
     transparent 100%
   );
-  filter: blur(0.5px);
+  filter: blur(1px);
   animation: saving-beam 700ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -973,37 +967,46 @@
     0 0 16px -8px color-mix(in oklab, var(--color-accent) 60%, transparent);
 }
 
-/* Resize handle — only visible on hover, always 1px */
+/* Resize handle — softly visible on hover, glass-tinted when dragging */
 .resize-handle {
-  background: transparent;
+  background: var(--glass-border, transparent);
   transition: background 140ms ease;
 }
-.resize-handle:hover,
+.resize-handle:hover {
+  background: color-mix(in oklab, var(--color-accent) 50%, transparent);
+}
 .resize-handle.is-dragging {
   background: var(--color-accent);
-  opacity: 0.6;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-accent) 25%, transparent);
 }
 
-/* CodeMirror */
+/* CodeMirror (standalone editor for .env / .py / .json / .ts / etc.) */
 .cm-editor {
   height: 100%;
   font-family: var(--font-mono);
   font-size: 13.5px;
-  background: var(--color-bg) !important;
+  line-height: 1.65;
+  background: transparent !important;
 }
 .cm-editor.cm-focused {
   outline: none;
 }
 .cm-scroller {
-  padding: 16px 0;
+  padding: 20px 0;
+}
+.cm-content {
+  padding: 0 24px;
+  caret-color: var(--color-accent);
 }
 .cm-gutters {
   background: transparent !important;
   border-right: none !important;
   color: var(--color-text-subtle) !important;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 .cm-activeLine {
-  background: color-mix(in oklab, var(--color-accent) 4%, transparent) !important;
+  background: color-mix(in oklab, var(--color-accent) 5%, transparent) !important;
 }
 .cm-activeLineGutter {
   background: transparent !important;
@@ -1016,6 +1019,10 @@
 .cm-selectionBackground,
 .cm-content ::selection {
   background: color-mix(in oklab, var(--color-accent) 22%, transparent) !important;
+}
+/* Subtle line numbers in dark — keep them but quiet */
+.cm-lineNumbers .cm-gutterElement {
+  padding: 0 8px;
 }
 
 /* ============================================================
@@ -1350,13 +1357,10 @@
   box-shadow: 0 0 10px -2px var(--color-success, #00ff66);
 }
 
-/* Matrix flash — green "hacker breach" animation */
+/* Run-confirmation flash — soft accent pulse (was matrix green) */
 @keyframes matrix-flash {
-  0%   { box-shadow: inset 0 0 0 1px var(--color-success, #00ff66), 0 0 24px var(--color-success, #00ff66); }
-  20%  { box-shadow: inset 0 0 0 0 var(--color-success), 0 0 6px var(--color-success); }
-  40%  { box-shadow: inset 0 0 0 1px var(--color-success), 0 0 18px var(--color-success); }
-  60%  { box-shadow: inset 0 0 0 0 var(--color-success), 0 0 4px var(--color-success); }
-  100% { box-shadow: 0 0 18px -10px color-mix(in oklab, var(--color-accent-2) 45%, transparent); }
+  0%   { box-shadow: inset 0 0 0 1px var(--color-accent), 0 0 20px color-mix(in oklab, var(--color-accent) 45%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 .milkdown .milkdown-code-block.matrix-flash {
   animation: matrix-flash 750ms ease-out;
@@ -1382,13 +1386,8 @@
   padding-left: 8px;
 }
 .milkdown .milkdown-code-block .cm-activeLine {
-  background: color-mix(in oklab, var(--color-accent-2, #00ffff) 6%, transparent) !important;
-  box-shadow: inset 2px 0 0 var(--color-accent-2, #00ffff) !important;
-  animation: code-active-pulse 2.4s ease-in-out infinite;
-}
-@keyframes code-active-pulse {
-  0%, 100% { box-shadow: inset 2px 0 0 color-mix(in oklab, var(--color-accent-2, #00ffff) 60%, transparent) !important; }
-  50%      { box-shadow: inset 2px 0 0 color-mix(in oklab, var(--color-accent-2, #00ffff) 100%, transparent), 0 0 8px -2px color-mix(in oklab, var(--color-accent-2, #00ffff) 30%, transparent) !important; }
+  background: color-mix(in oklab, var(--color-accent) 5%, transparent) !important;
+  box-shadow: inset 2px 0 0 color-mix(in oklab, var(--color-accent) 60%, transparent) !important;
 }
 .milkdown .milkdown-code-block .cm-activeLineGutter {
   background: transparent !important;
@@ -1407,28 +1406,28 @@
 .milkdown .milkdown-code-block .cm-line {
   color: var(--color-text);
 }
-/* —— cyberpunk syntax: neon-green strings, hot-pink funcs, orange keywords —— */
+/* —— Calm modern syntax — One Dark Pro-inspired, no neon —— */
 .milkdown .milkdown-code-block .tok-keyword,
 .milkdown .milkdown-code-block .tok-modifier,
 .milkdown .milkdown-code-block .tok-controlKeyword,
 .milkdown .milkdown-code-block .tok-operatorKeyword,
 .milkdown .milkdown-code-block .tok-definitionKeyword,
 .milkdown .milkdown-code-block .tok-self {
-  color: #ff9933; /* electric orange */
+  color: #c084fc;             /* soft violet */
   font-weight: 500;
 }
 .milkdown .milkdown-code-block .tok-string,
 .milkdown .milkdown-code-block .tok-string2,
 .milkdown .milkdown-code-block .tok-regexp,
 .milkdown .milkdown-code-block .tok-character {
-  color: var(--color-accent); /* matrix green */
+  color: #98c379;             /* sage green strings */
 }
 .milkdown .milkdown-code-block .tok-number,
 .milkdown .milkdown-code-block .tok-bool,
 .milkdown .milkdown-code-block .tok-null,
 .milkdown .milkdown-code-block .tok-atom,
 .milkdown .milkdown-code-block .tok-literal {
-  color: var(--color-accent-2, #00ffff); /* electric cyan */
+  color: #d19a66;             /* warm amber numbers */
 }
 .milkdown .milkdown-code-block .tok-comment,
 .milkdown .milkdown-code-block .tok-lineComment,
@@ -1436,12 +1435,11 @@
 .milkdown .milkdown-code-block .tok-docComment {
   color: var(--color-text-subtle);
   font-style: italic;
-  opacity: 0.85;
 }
 .milkdown .milkdown-code-block .tok-function,
 .milkdown .milkdown-code-block .tok-definition.tok-function,
 .milkdown .milkdown-code-block .tok-macroName {
-  color: var(--color-accent-3, #ff2d92); /* hot pink */
+  color: #61afef;             /* clear blue funcs */
   font-weight: 500;
 }
 .milkdown .milkdown-code-block .tok-variableName {
@@ -1449,15 +1447,15 @@
 }
 .milkdown .milkdown-code-block .tok-typeName,
 .milkdown .milkdown-code-block .tok-namespace {
-  color: var(--color-accent-2, #00ffff);
+  color: #e5c07b;             /* type names amber-yellow */
 }
 .milkdown .milkdown-code-block .tok-className {
-  color: var(--color-accent-2, #00ffff);
+  color: #e5c07b;
   font-weight: 600;
 }
 .milkdown .milkdown-code-block .tok-propertyName,
 .milkdown .milkdown-code-block .tok-attributeName {
-  color: #ffeb6b; /* electric yellow for attrs */
+  color: #e06c75;             /* attrs muted red */
 }
 .milkdown .milkdown-code-block .tok-operator,
 .milkdown .milkdown-code-block .tok-punctuation,
@@ -1667,6 +1665,154 @@
   text-decoration-color: var(--color-accent);
 }
 
+/* ─── In-doc backlinks footer ──────────────────────────────────
+   Sits below the markdown editor when the current note is referenced
+   by others. Glass-styled card matching the rest of the system. */
+.indoc-backlinks {
+  max-width: 1500px;
+  margin: 32px auto 60px;
+  padding: 0 clamp(24px, 5vw, 120px);
+}
+.indoc-backlinks-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+:root.dark .indoc-backlinks-title {
+  border-bottom-color: var(--glass-border);
+}
+.indoc-backlinks-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.indoc-backlinks-group {
+  background: color-mix(in oklab, var(--color-text) 4%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-text) 8%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+:root.dark .indoc-backlinks-group {
+  background: linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
+  border-color: var(--glass-border);
+}
+.indoc-backlinks-group:hover {
+  border-color: color-mix(in oklab, var(--color-accent) 30%, transparent);
+}
+.indoc-backlinks-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-align: left;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.indoc-backlinks-source:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.indoc-backlinks-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--color-text-subtle);
+  font-weight: 500;
+  background: color-mix(in oklab, var(--color-text) 6%, transparent);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.indoc-backlinks-snippet {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  text-align: left;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.indoc-backlinks-snippet:hover {
+  color: var(--color-text);
+}
+.indoc-backlinks-line {
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.indoc-backlinks-preview {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.indoc-backlinks-more {
+  font-size: 10.5px;
+  color: var(--color-text-subtle);
+  margin-top: 4px;
+}
+
+/* ─── LaTeX / KaTeX — math formulas (block + inline) ───────────── */
+.milkdown .ProseMirror .math-block,
+.milkdown .ProseMirror math-block {
+  display: block;
+  text-align: center;
+  margin: 1rem 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--color-text) 4%, transparent);
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+:root.dark .milkdown .ProseMirror .math-block,
+:root.dark .milkdown .ProseMirror math-block {
+  background: linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+  border-color: var(--glass-border);
+}
+.milkdown .ProseMirror .math-inline,
+.milkdown .ProseMirror math-inline {
+  padding: 0 3px;
+}
+/* KaTeX is opinionated about font sizing — keep its scale close to body */
+.milkdown .ProseMirror .katex {
+  font-size: 1em;
+}
+
+/* ─── Hashtag decoration — #tag inline chip ───────────────────── */
+.milkdown .ProseMirror .mf-tag {
+  color: var(--color-accent-3);
+  background: color-mix(in oklab, var(--color-accent-3) 10%, transparent);
+  border-radius: 999px;
+  padding: 0 7px;
+  margin: 0 1px;
+  font-size: 0.88em;
+  letter-spacing: 0;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 140ms ease;
+  white-space: nowrap;
+}
+:root.dark .milkdown .ProseMirror .mf-tag {
+  background: color-mix(in oklab, var(--color-accent-3) 16%, transparent);
+}
+.milkdown .ProseMirror .mf-tag:hover {
+  background: color-mix(in oklab, var(--color-accent-3) 22%, transparent);
+  cursor: pointer;
+}
+
 /* ─── Wikilink decoration — [[name]] inside the editor ───────── */
 .milkdown .ProseMirror .mf-wikilink {
   color: var(--color-accent);
@@ -1841,7 +1987,8 @@
    table tooltip, link popover. Match our cleaner palette.
    ============================================================ */
 
-/* Floating menus & popovers */
+/* Floating menus & popovers — glass card style, same language as
+   FileTree context menu / Settings modal / SelectionMenu. */
 milkdown-toolbar,
 milkdown-slash-menu,
 milkdown-link-edit,
@@ -1853,12 +2000,16 @@ milkdown-image-block-menu,
 .milkdown-slash-menu,
 .milkdown-link-edit,
 .milkdown-block-handle {
-  background: var(--color-bg) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06) !important;
+  background: var(--color-bg-soft) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 0 0 1px var(--glass-border),
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 20px 48px rgba(0, 0, 0, 0.35) !important;
   color: var(--color-text) !important;
-  font-family: var(--crepe-font-default) !important;
+  font-family: var(--font-sans) !important;
+  padding: 6px !important;
 }
 
 /* Buttons inside menus */
@@ -1868,7 +2019,8 @@ milkdown-block-handle button,
 .milkdown-toolbar .toolbar-item,
 .milkdown-slash-menu .menu-item {
   color: var(--color-text-muted) !important;
-  border-radius: 5px !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
   transition: background 120ms ease, color 120ms ease !important;
 }
 milkdown-toolbar button:hover,
@@ -1877,7 +2029,7 @@ milkdown-block-handle button:hover,
 .milkdown-toolbar .toolbar-item:hover,
 .milkdown-slash-menu .menu-item:hover,
 .milkdown-slash-menu .menu-item.hover {
-  background: var(--color-bg-soft) !important;
+  background: color-mix(in oklab, var(--color-text) 8%, transparent) !important;
   color: var(--color-text) !important;
 }
 milkdown-toolbar button.active,

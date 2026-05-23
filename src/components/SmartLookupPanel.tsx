@@ -73,7 +73,7 @@ export function SmartLookupPanel() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-3 pt-3 pb-1 flex items-center justify-between">
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <span className="geek-label">semantic</span>
         <div className="flex items-center gap-0.5">
           <button

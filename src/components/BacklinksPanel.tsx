@@ -27,7 +27,7 @@ export function BacklinksPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 pt-3 pb-1 flex items-center justify-between">
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <span className="geek-label">backlinks</span>
         <button
           onClick={() => activePath && loadBacklinks(activePath)}

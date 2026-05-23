@@ -83,21 +83,21 @@ export function SettingsModal() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--color-border)]">
-          <h2 className="text-[14px] font-semibold">设置</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border,var(--color-border))]">
+          <h2 className="text-[15px] font-semibold">设置</h2>
           <button
             onClick={() => setSettingsOpen(false)}
-            className="p-1 rounded-md hover:bg-[var(--color-bg-soft)] text-[var(--color-text-muted)]"
+            className="p-1.5 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)] text-[var(--color-text-muted)]"
           >
             <X size={15} strokeWidth={1.75} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-7">
           {/* LLM Service */}
           <section>
-            <SectionTitle>llm endpoint</SectionTitle>
+            <SectionTitle>LLM 端点</SectionTitle>
             <Field label="Base URL">
               <Input
                 value={draft.baseURL}
@@ -130,7 +130,7 @@ export function SettingsModal() {
 
           {/* Model bindings */}
           <section>
-            <SectionTitle>model bindings</SectionTitle>
+            <SectionTitle>模型绑定</SectionTitle>
             <Field label="对话模型" hint="AI 助手默认使用">
               <ModelPicker
                 value={draft.chatModel}
@@ -166,16 +166,16 @@ export function SettingsModal() {
           </section>
 
           <section>
-            <SectionTitle>version</SectionTitle>
+            <SectionTitle>版本</SectionTitle>
             <VersionPanel />
           </section>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-bg-soft)]">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[var(--glass-border,var(--color-border))] bg-[color-mix(in_oklab,var(--color-text)_3%,transparent)]">
           <button
             onClick={() => setSettingsOpen(false)}
-            className="px-4 py-2 text-[12.5px] rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+            className="px-4 py-2 text-[12.5px] rounded-lg text-[var(--color-text-muted)] hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)]"
           >
             取消
           </button>
@@ -381,9 +381,10 @@ function UpdateStatus({
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mb-2.5">
-      <span className="geek-label">{children}</span>
-      <span className="flex-1 h-px bg-[var(--color-border)]" />
+    <div className="mb-3">
+      <h3 className="text-[12.5px] font-semibold text-[var(--color-text)] tracking-tight">
+        {children}
+      </h3>
     </div>
   );
 }

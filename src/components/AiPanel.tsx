@@ -165,13 +165,13 @@ export function AiPanel() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-3 pt-3 pb-2 flex items-center gap-2">
+      <div className="px-4 pt-4 pb-3 flex items-center gap-2">
         <span className="geek-label flex-1">ai</span>
         {modelOptions.length > 0 && (
           <select
             value={activeModel}
             onChange={(e) => setModelOverride(e.target.value)}
-            className="text-[10.5px] bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-1.5 py-0.5 text-[var(--color-text-muted)] outline-none focus:border-[var(--color-accent)] max-w-[120px] truncate"
+            className="text-[10.5px] bg-[color-mix(in_oklab,var(--color-text)_4%,transparent)] border border-[var(--glass-border,var(--color-border))] rounded-md px-2 py-0.5 text-[var(--color-text-muted)] outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-accent)_14%,transparent)] max-w-[120px] truncate"
             title="选择模型"
           >
             {modelOptions.map((m) => (
@@ -185,14 +185,14 @@ export function AiPanel() {
           onClick={clearAiMessages}
           disabled={aiMessages.length === 0 || aiPending}
           title="新对话"
-          className="p-1 rounded hover:bg-[var(--color-bg)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] disabled:opacity-40"
+          className="p-1 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] disabled:opacity-40"
         >
           <Plus size={12} strokeWidth={1.75} />
         </button>
       </div>
 
       {/* Context chips */}
-      <div className="px-3 pb-2 flex items-center gap-1.5 flex-wrap">
+      <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
         <span className="text-[10.5px] text-[var(--color-text-subtle)]">上下文</span>
         <ContextChip
           active={contextMode === "doc"}
@@ -203,7 +203,7 @@ export function AiPanel() {
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-3 pb-2">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-2">
         {notConfigured && (
           <div className="mt-4 p-3 rounded-xl bg-[var(--md-amber-soft)] text-[12.5px] leading-relaxed">
             <div className="font-medium mb-1">尚未配置对话模型</div>
@@ -250,7 +250,7 @@ export function AiPanel() {
       </div>
 
       {/* Input */}
-      <div className="px-3 pb-3 pt-1 border-t border-[var(--color-border)]">
+      <div className="px-4 pb-4 pt-2 border-t border-[var(--glass-border,var(--color-border))]">
         <div className="cyber-input">
           <textarea
             ref={textareaRef}
@@ -354,7 +354,7 @@ function Message({
         </span>
       </div>
       {isUser ? (
-        <div className="text-[12.5px] leading-relaxed whitespace-pre-wrap break-words rounded-2xl bg-[var(--color-bg-muted)] px-3 py-2 text-[var(--color-text)] border border-[var(--glass-border,var(--color-border))]">
+        <div className="text-[12.5px] leading-relaxed whitespace-pre-wrap break-words rounded-2xl bg-[color-mix(in_oklab,var(--color-accent)_10%,var(--color-bg-muted))] px-3.5 py-2.5 text-[var(--color-text)] border border-[color-mix(in_oklab,var(--color-accent)_18%,transparent)]">
           {message.content}
         </div>
       ) : (

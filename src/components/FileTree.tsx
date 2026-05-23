@@ -10,11 +10,24 @@ import {
   X,
   Plus,
   ChevronsDownUp,
+  Check,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import clsx from "clsx";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import { useStore, basename } from "../store";
 import type { FileNode } from "../types";
 import { detectKind, isEditable } from "../utils/fileKind";
+
 
 interface RowProps {
   node: FileNode;
@@ -69,9 +82,9 @@ function WireframeFolder({ open }: { open: boolean }) {
 }
 
 function GitFlag({ status }: { status: "new" | "mod" | "del" }) {
-  if (status === "new") return <span className="git-flag git-flag-new">[+]</span>;
-  if (status === "mod") return <span className="git-flag git-flag-mod">[M]</span>;
-  return <span className="git-flag git-flag-del">[-]</span>;
+  if (status === "new") return <span className="git-flag git-flag-new" title="新增未跟踪">A</span>;
+  if (status === "mod") return <span className="git-flag git-flag-mod" title="已修改未提交">M</span>;
+  return <span className="git-flag git-flag-del" title="已删除">D</span>;
 }
 
 function Row({ node, depth }: RowProps) {
@@ -117,13 +130,33 @@ function Row({ node, depth }: RowProps) {
   const fileStatus = !node.is_dir ? gitStatus[node.path] : undefined;
   const isSaving = !node.is_dir && savingPath === node.path;
 
+  // dnd-kit — make every row draggable; folders are also droppable targets.
+  // Distance threshold 8px keeps single-click open behavior intact.
+  const drag = useDraggable({ id: `drag:${node.path}`, data: { path: node.path } });
+  const drop = useDroppable({
+    id: `drop:${node.path}`,
+    data: { path: node.path, isDir: node.is_dir },
+    disabled: !node.is_dir,                  // only folders accept drops
+  });
+
+  // Combine refs — drag wraps the whole row; drop overlays it (folders only)
+  const setRefs = (el: HTMLDivElement | null) => {
+    drag.setNodeRef(el);
+    if (node.is_dir) drop.setNodeRef(el);
+  };
+
   return (
     <>
       <div
+        ref={setRefs}
+        {...drag.attributes}
+        {...drag.listeners}
         className={clsx(
           "scan-row group flex items-center gap-1.5 pr-2 py-[5px] cursor-pointer text-[13px] select-none rounded-md mx-1",
           fileStatus === "mod" && "row-mod",
           isActive ? "is-active" : "text-[var(--color-text)] hover:bg-[var(--color-bg-soft)]",
+          drop.isOver && "row-drop-target",
+          drag.isDragging && "opacity-50",
         )}
         style={{ paddingLeft: 6 + depth * 14 }}
         onClick={onClick}
@@ -131,11 +164,12 @@ function Row({ node, depth }: RowProps) {
       >
         {isSaving && <div className="saving-beam" />}
         {node.is_dir ? (
-          open ? (
-            <ChevronDown size={11} className="text-[var(--color-text-subtle)] shrink-0" />
-          ) : (
-            <ChevronRight size={11} className="text-[var(--color-text-subtle)] shrink-0" />
-          )
+          <ChevronRight
+            size={11}
+            strokeWidth={2}
+            className="text-[var(--color-text-subtle)] shrink-0 transition-transform duration-150"
+            style={{ transform: open ? "rotate(90deg)" : "none" }}
+          />
         ) : (
           <span className="w-3 shrink-0" />
         )}
@@ -161,7 +195,7 @@ function Row({ node, depth }: RowProps) {
           />
         ) : (
           <>
-            <span className="flex-1 truncate font-mono text-[12.5px] tracking-tight">{node.name}</span>
+            <span className="flex-1 truncate text-[13px] tracking-tight">{node.name}</span>
             {!node.is_dir && gitStatus[node.path] && (
               <GitFlag status={gitStatus[node.path]} />
             )}
@@ -178,14 +212,22 @@ function Row({ node, depth }: RowProps) {
           }}
         >
           <div
-            style={{ left: menu.x, top: menu.y }}
-            className="absolute bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md shadow-lg shadow-black/5 py-1 text-[13px] min-w-[160px]"
+            style={{
+              left: menu.x,
+              top: menu.y,
+              boxShadow: `
+                inset 0 0 0 1px var(--glass-border),
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                0 20px 48px rgba(0, 0, 0, 0.35)
+              `,
+            }}
+            className="absolute bg-[var(--color-bg-soft)] rounded-xl py-1.5 text-[13px] min-w-[180px] backdrop-blur-md"
             onClick={(e) => e.stopPropagation()}
           >
             {node.is_dir && (
               <>
                 <button
-                  className="block w-full text-left px-3 py-1.5 hover:bg-[var(--color-bg-soft)]"
+                  className="block w-full text-left px-3.5 py-1.5 mx-1 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
                   onClick={async () => {
                     setMenu(null);
                     const name = prompt("文件名 (例: notes.md)");
@@ -195,7 +237,7 @@ function Row({ node, depth }: RowProps) {
                   新建文件
                 </button>
                 <button
-                  className="block w-full text-left px-3 py-1.5 hover:bg-[var(--color-bg-soft)]"
+                  className="block w-full text-left px-3.5 py-1.5 mx-1 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
                   onClick={async () => {
                     setMenu(null);
                     const name = prompt("文件夹名");
@@ -204,11 +246,11 @@ function Row({ node, depth }: RowProps) {
                 >
                   新建文件夹
                 </button>
-                <div className="my-1 h-px bg-[var(--color-border)]" />
+                <div className="my-1 mx-2 h-px bg-[var(--glass-border,var(--color-border))]" />
               </>
             )}
             <button
-              className="block w-full text-left px-3 py-1.5 hover:bg-[var(--color-bg-soft)]"
+              className="block w-full text-left px-3.5 py-1.5 mx-1 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
               onClick={() => {
                 setMenu(null);
                 setEditing(true);
@@ -217,7 +259,7 @@ function Row({ node, depth }: RowProps) {
               重命名
             </button>
             <button
-              className="block w-full text-left px-3 py-1.5 hover:bg-[var(--color-bg-soft)] text-[var(--color-danger)]"
+              className="block w-full text-left px-3.5 py-1.5 mx-1 rounded-md hover:bg-[color-mix(in_oklab,var(--color-danger)_12%,transparent)] text-[var(--color-danger)]"
               onClick={async () => {
                 setMenu(null);
                 if (confirm(`删除 ${node.name}?`)) await deletePath(node.path, node.is_dir);
@@ -245,19 +287,31 @@ function WorkspaceSection({ rootPath }: { rootPath: string }) {
   const open = expanded.has(rootPath);
   const displayName = tree?.name ?? basename(rootPath);
 
+  // Workspace root is also a droppable — drag a file onto the section
+  // header to move it into the root folder.
+  const drop = useDroppable({
+    id: `drop:${rootPath}`,
+    data: { path: rootPath, isDir: true },
+  });
+
   return (
     <div className="mb-1">
       <div
-        className="group flex items-center gap-1.5 px-3 py-1.5 cursor-pointer select-none hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] rounded-md mx-1"
+        ref={drop.setNodeRef}
+        className={clsx(
+          "group flex items-center gap-1.5 px-3 py-1.5 cursor-pointer select-none hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] rounded-md mx-1",
+          drop.isOver && "row-drop-target",
+        )}
         onClick={() => toggleExpand(rootPath)}
         title={rootPath}
       >
-        {open ? (
-          <ChevronDown size={11} className="text-[var(--color-text-subtle)] shrink-0" />
-        ) : (
-          <ChevronRight size={11} className="text-[var(--color-text-subtle)] shrink-0" />
-        )}
-        <span className="text-[11px] tracking-[0.06em] text-[var(--color-accent)] font-mono truncate flex-1">
+        <ChevronRight
+          size={11}
+          strokeWidth={2}
+          className="text-[var(--color-text-subtle)] shrink-0 transition-transform duration-150"
+          style={{ transform: open ? "rotate(90deg)" : "none" }}
+        />
+        <span className="text-[11px] tracking-[0.08em] text-[var(--color-accent)] uppercase font-semibold truncate flex-1">
           {displayName}
         </span>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
@@ -323,8 +377,21 @@ function WorkspaceSection({ rootPath }: { rootPath: string }) {
 }
 
 export function FileTree() {
-  const { roots, addFolder, refreshAllTrees, collapseAll } = useStore();
+  const { roots, addFolder, refreshAllTrees, collapseAll, movePath } = useStore();
   const [refreshing, setRefreshing] = useState(false);
+
+  // dnd-kit — handle move-to-folder. 8px distance keeps clicks intact.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+  const onDragEnd = (e: DragEndEvent) => {
+    const src = e.active.data.current?.path as string | undefined;
+    const dest = e.over?.data.current?.path as string | undefined;
+    const destIsDir = e.over?.data.current?.isDir as boolean | undefined;
+    if (!src || !dest || !destIsDir) return;
+    if (src === dest) return;
+    movePath(src, dest).catch((err) => console.warn("[FileTree] movePath failed", err));
+  };
 
   const handleRefreshAll = async () => {
     setRefreshing(true);
@@ -354,9 +421,9 @@ export function FileTree() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Title row */}
-      <div className="px-3 pt-3 pb-1">
-        <span className="geek-label">files</span>
+      {/* Workspace switcher */}
+      <div className="px-4 pt-4 pb-2">
+        <WorkspaceSwitcher />
       </div>
       {/* Action toolbar */}
       <div className="flex items-center gap-0.5 px-2 pb-1.5">
@@ -407,11 +474,188 @@ export function FileTree() {
           <Plus size={13} strokeWidth={1.75} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto pt-1 pb-2">
-        {roots.map((r) => (
-          <WorkspaceSection key={r} rootPath={r} />
-        ))}
+      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+        <div className="flex-1 overflow-y-auto pt-1 pb-2">
+          {roots.map((r) => (
+            <WorkspaceSection key={r} rootPath={r} />
+          ))}
+        </div>
+      </DndContext>
+    </div>
+  );
+}
+
+/** Workspace dropdown — shown at top of file tree.
+ *  Click name → menu lists all workspaces + create/rename/delete actions. */
+function WorkspaceSwitcher() {
+  const {
+    workspaces,
+    activeWorkspaceId,
+    switchWorkspace,
+    createWorkspace,
+    renameWorkspace,
+    deleteWorkspace,
+  } = useStore();
+  const [open, setOpen] = useState(false);
+  const active = workspaces.find((w) => w.id === activeWorkspaceId);
+
+  if (!active) return <span className="geek-label">files</span>;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 w-full text-left rounded-md px-1.5 py-0.5 -mx-1.5 hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] transition-colors"
+        title="切换工作区"
+      >
+        <span className="text-[11px] uppercase tracking-[0.09em] text-[var(--color-text-subtle)] font-semibold">
+          工作区
+        </span>
+        <span className="text-[12.5px] text-[var(--color-text)] font-medium truncate flex-1">
+          {active.name}
+        </span>
+        <ChevronDown
+          size={11}
+          strokeWidth={2}
+          className={clsx(
+            "text-[var(--color-text-subtle)] shrink-0 transition-transform duration-150",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div
+            className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-[var(--color-bg-soft)] rounded-xl py-1.5"
+            style={{
+              boxShadow: `
+                inset 0 0 0 1px var(--glass-border),
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                0 20px 48px rgba(0, 0, 0, 0.35)
+              `,
+            }}
+          >
+            <div className="px-3 pt-1 pb-2 text-[9.5px] uppercase tracking-[0.09em] text-[var(--color-text-subtle)] font-semibold">
+              切换工作区
+            </div>
+            {workspaces.map((w) => (
+              <WorkspaceRow
+                key={w.id}
+                ws={w}
+                active={w.id === activeWorkspaceId}
+                canDelete={workspaces.length > 1}
+                onSelect={async () => {
+                  setOpen(false);
+                  if (w.id !== activeWorkspaceId) await switchWorkspace(w.id);
+                }}
+                onRename={(name) => renameWorkspace(w.id, name)}
+                onDelete={async () => {
+                  if (confirm(`删除工作区 "${w.name}"？\n\n该工作区的文件夹引用会被移除，但磁盘文件不会被删除。`)) {
+                    await deleteWorkspace(w.id);
+                    setOpen(false);
+                  }
+                }}
+              />
+            ))}
+            <div className="my-1 mx-2 h-px bg-[var(--glass-border,var(--color-border))]" />
+            <button
+              onClick={async () => {
+                const name = prompt("新工作区名称");
+                if (name) await createWorkspace(name);
+                setOpen(false);
+              }}
+              className="flex items-center gap-1.5 w-full text-left px-3.5 py-1.5 mx-1 rounded-md text-[12.5px] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
+            >
+              <Plus size={11} strokeWidth={2} className="text-[var(--color-text-subtle)]" />
+              新建工作区
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function WorkspaceRow({
+  ws,
+  active,
+  canDelete,
+  onSelect,
+  onRename,
+  onDelete,
+}: {
+  ws: { id: string; name: string; roots: string[] };
+  active: boolean;
+  canDelete: boolean;
+  onSelect: () => void;
+  onRename: (n: string) => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(ws.name);
+
+  if (editing) {
+    return (
+      <div className="px-3.5 py-1 mx-1 flex items-center gap-1.5">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              onRename(draft);
+              setEditing(false);
+            }
+            if (e.key === "Escape") setEditing(false);
+          }}
+          autoFocus
+          className="cyber-input flex-1 px-2 py-1 text-[12px]"
+        />
       </div>
+    );
+  }
+
+  return (
+    <div className="group flex items-center mx-1">
+      <button
+        onClick={onSelect}
+        className={clsx(
+          "flex-1 flex items-center gap-2 text-left px-3.5 py-1.5 rounded-md text-[12.5px]",
+          active
+            ? "text-[var(--color-text)] font-medium"
+            : "text-[var(--color-text-muted)] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)] hover:text-[var(--color-text)]",
+        )}
+      >
+        <Check
+          size={11}
+          strokeWidth={2.5}
+          className={active ? "text-[var(--color-accent)]" : "text-transparent"}
+        />
+        <span className="truncate flex-1">{ws.name}</span>
+        <span className="text-[10px] text-[var(--color-text-subtle)] tabular-nums">
+          {ws.roots.length}
+        </span>
+      </button>
+      <button
+        onClick={() => {
+          setDraft(ws.name);
+          setEditing(true);
+        }}
+        className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-[var(--color-text-subtle)] hover:text-[var(--color-text)] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)] mx-0.5"
+        title="重命名"
+      >
+        <Pencil size={10} strokeWidth={1.75} />
+      </button>
+      {canDelete && (
+        <button
+          onClick={onDelete}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] hover:bg-[color-mix(in_oklab,var(--color-danger)_12%,transparent)] mr-1"
+          title="删除工作区"
+        >
+          <Trash2 size={10} strokeWidth={1.75} />
+        </button>
+      )}
     </div>
   );
 }

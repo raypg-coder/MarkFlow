@@ -186,29 +186,29 @@ export function GraphPanel() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="px-3 pt-3 pb-1 flex items-center justify-between">
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <span className="geek-label">graph</span>
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => fgRef.current?.zoomToFit(300, 40)}
             title="重置视图"
-            className="p-1 rounded hover:bg-[var(--color-bg)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)]"
+            className="p-1.5 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)]"
           >
-            <Crosshair size={11} strokeWidth={1.75} />
+            <Crosshair size={12} strokeWidth={1.75} />
           </button>
           <button
             onClick={loadLinkGraph}
             disabled={linkGraphLoading}
             title="刷新"
-            className="p-1 rounded hover:bg-[var(--color-bg)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] disabled:opacity-40"
+            className="p-1.5 rounded-md hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] disabled:opacity-40"
           >
-            <RefreshCw size={11} strokeWidth={1.75} className={linkGraphLoading ? "animate-spin" : ""} />
+            <RefreshCw size={12} strokeWidth={1.75} className={linkGraphLoading ? "animate-spin" : ""} />
           </button>
         </div>
       </div>
 
       {/* Depth + color-by selectors */}
-      <div className="px-3 pb-2 flex items-center gap-2 flex-wrap">
+      <div className="px-4 pb-3 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1">
           <span className="text-[10.5px] text-[var(--color-text-subtle)]">深度</span>
           {(["1", "2", "all"] as const).map((d) => {
@@ -218,10 +218,10 @@ export function GraphPanel() {
               <button
                 key={d}
                 onClick={() => setDepth(v)}
-                className={`text-[11px] px-2 py-0.5 rounded ${
+                className={`text-[11px] px-2.5 py-0.5 rounded-full transition-colors ${
                   depth === v
-                    ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-[inset_0_0_0_1px_var(--color-border)]"
-                    : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                    ? "bg-[var(--color-accent)] text-white font-medium"
+                    : "text-[var(--color-text-muted)] hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)]"
                 }`}
               >
                 {label}
@@ -241,10 +241,10 @@ export function GraphPanel() {
             <button
               key={v}
               onClick={() => setColorBy(v)}
-              className={`text-[11px] px-2 py-0.5 rounded ${
+              className={`text-[11px] px-2.5 py-0.5 rounded-full transition-colors ${
                 colorBy === v
-                  ? "bg-[var(--color-bg)] text-[var(--color-text)] shadow-[inset_0_0_0_1px_var(--color-border)]"
-                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                  ? "bg-[var(--color-accent)] text-white font-medium"
+                  : "text-[var(--color-text-muted)] hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)]"
               }`}
             >
               {label}

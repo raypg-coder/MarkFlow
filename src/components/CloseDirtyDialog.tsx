@@ -109,25 +109,25 @@ export function CloseDirtyDialog() {
         <div className="flex items-center gap-2 px-5 py-3.5">
           <button
             onClick={onSave}
-            className="flex-1 px-3.5 py-2 text-[12.5px] rounded-lg font-medium bg-[var(--color-accent)] text-white hover:opacity-90 font-mono"
+            className="flex-1 px-3.5 py-2 text-[12.5px] rounded-lg font-medium bg-[var(--color-accent)] text-white hover:opacity-90"
             autoFocus
           >
-            [ save ]
+            保存
             <span className="ml-1.5 opacity-60 text-[10px]">↵</span>
           </button>
           <button
             onClick={onDiscard}
-            className="px-3.5 py-2 text-[12.5px] rounded-lg font-mono text-[var(--color-danger)] border border-[var(--color-danger)]/40 hover:border-[var(--color-danger)] hover:bg-[color-mix(in_oklab,var(--color-danger)_8%,transparent)]"
+            className="px-3.5 py-2 text-[12.5px] rounded-lg text-[var(--color-danger)] border border-[var(--color-danger)]/40 hover:border-[var(--color-danger)] hover:bg-[color-mix(in_oklab,var(--color-danger)_8%,transparent)]"
           >
-            [ discard ]
-            <span className="ml-1.5 opacity-60 text-[10px]">d</span>
+            丢弃
+            <span className="ml-1.5 opacity-60 text-[10px]">D</span>
           </button>
           <button
             onClick={onCancel}
-            className="px-3.5 py-2 text-[12.5px] rounded-lg font-mono text-[var(--color-text-muted)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text)]"
+            className="px-3.5 py-2 text-[12.5px] rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-text)]"
           >
-            [ cancel ]
-            <span className="ml-1.5 opacity-60 text-[10px]">esc</span>
+            取消
+            <span className="ml-1.5 opacity-60 text-[10px]">Esc</span>
           </button>
         </div>
       </div>

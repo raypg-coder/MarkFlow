@@ -2,12 +2,12 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile, mkdir, remove, rename } from "@tauri-apps/plugin-fs";
-import type { FileNode, OpenFile, SearchHit, Backlink, LinkGraph, RightSidebarView, GitFileStatus, Mission, MissionPriority } from "./types";
+import type { FileNode, OpenFile, SearchHit, Backlink, LinkGraph, RightSidebarView, GitFileStatus, Mission, MissionPriority, Workspace } from "./types";
 import { detectKind } from "./utils/fileKind";
 import { loadLLMSettings, saveLLMSettings, embed, type LLMSettings, type ChatMessage } from "./utils/llm";
 import type { UpdateState } from "./utils/updater";
 import { scheduleSwap, cancelSwap, deleteSwap, loadAllSwaps } from "./utils/swap";
-import { scheduleAutosave, cancelAutosave } from "./utils/autosave";
+import { scheduleAutosave, cancelAutosave, flushAllAutosaves } from "./utils/autosave";
 import {
   loadIndex,
   clearIndex,
@@ -62,6 +62,9 @@ interface State {
   semanticSearching: boolean;
   closeDirtyPath: string | null;       // path of file pending close-confirm
   recoveredOnceAt: number | null;       // timestamp when swap recovery ran (gates restoreTrees ordering)
+  recentFiles: string[];                // recently opened paths, newest first, capped at 20
+  workspaces: Workspace[];              // named collections of root folders
+  activeWorkspaceId: string;            // currently selected workspace id
   quickOpenVisible: boolean;            // Cmd+P file switcher modal
 
   addFolder: () => Promise<void>;
@@ -70,9 +73,21 @@ interface State {
   refreshAllTrees: () => Promise<void>;
   restoreTrees: () => Promise<void>;
   reloadCleanOpenFiles: () => Promise<void>;
+  /** Set of file paths that were modified externally while dirty in the
+   *  editor. Surfaces a banner the user can act on (reload disk / keep
+   *  local). Updated by detectExternalChanges() which runs on window focus. */
+  externalChangedPaths: string[];
+  detectExternalChanges: () => Promise<void>;
+  resolveExternalChange: (path: string, action: "reload" | "keep") => Promise<void>;
   toggleExpand: (path: string) => void;
   openFile: (path: string, name: string) => Promise<void>;
   closeFile: (path: string) => void;
+  reorderTabs: (fromIdx: number, toIdx: number) => void;
+  reorderMissions: (fromIdx: number, toIdx: number) => void;
+  createWorkspace: (name: string) => Promise<void>;
+  switchWorkspace: (id: string) => Promise<void>;
+  renameWorkspace: (id: string, name: string) => void;
+  deleteWorkspace: (id: string) => Promise<void>;
   requestCloseFile: (path: string) => void;     // dirty-aware close (prompts on dirty)
   setCloseDirtyPath: (path: string | null) => void;
   setQuickOpenVisible: (v: boolean) => void;
@@ -89,6 +104,7 @@ interface State {
   createFolder: (parentDir: string, name: string) => Promise<void>;
   deletePath: (path: string, isDir: boolean) => Promise<void>;
   renamePath: (oldPath: string, newName: string) => Promise<void>;
+  movePath: (srcPath: string, destDir: string) => Promise<void>;
   toggleTheme: () => void;
   setSearchQuery: (q: string) => void;
   runSearch: () => Promise<void>;
@@ -144,26 +160,25 @@ function rootOf(roots: string[], p: string): string | null {
   return null;
 }
 
-function loadRoots(): string[] {
-  try {
-    const v = JSON.parse(localStorage.getItem("roots") || "[]");
-    if (Array.isArray(v) && v.length) {
-      return v.filter((x) => typeof x === "string");
-    }
-    // Migrate legacy single-root key from before multi-root support
-    const legacy = localStorage.getItem("lastRoot");
-    if (legacy) {
-      localStorage.setItem("roots", JSON.stringify([legacy]));
-      localStorage.removeItem("lastRoot");
-      return [legacy];
-    }
-    return [];
-  } catch {
-    return [];
-  }
-}
+// loadRoots() removed — multi-workspace flow loads via loadWorkspaces().
+// The legacy "roots" localStorage key is still mirrored by saveRoots() for
+// any external tooling that might read it.
 function saveRoots(roots: string[]) {
+  // Legacy single-roots key kept for back-compat (other tools might read it)
   localStorage.setItem("roots", JSON.stringify(roots));
+}
+
+/** Persist roots change into the currently active workspace */
+function syncRootsToActiveWorkspace(
+  workspaces: Workspace[],
+  activeId: string,
+  roots: string[],
+): Workspace[] {
+  const next = workspaces.map((w) =>
+    w.id === activeId ? { ...w, roots } : w,
+  );
+  persistWorkspaces(next, activeId);
+  return next;
 }
 
 const MISSIONS_KEY = "missions:v1";
@@ -183,10 +198,85 @@ function persistMissions(missions: Mission[]) {
   } catch {}
 }
 
+// ─── Workspaces ─────────────────────────────────────────────
+// Multi-vault support: each workspace has its own list of root folders.
+// Migration: legacy users had a single flat roots[] in localStorage — on first
+// load we wrap it into a "默认" workspace.
+const WORKSPACES_KEY = "workspaces:v1";
+const ACTIVE_WORKSPACE_KEY = "activeWorkspace:v1";
+
+function genId(): string {
+  return "w_" + Math.random().toString(36).slice(2, 10);
+}
+
+function loadWorkspaces(): { workspaces: Workspace[]; activeId: string } {
+  try {
+    const raw = localStorage.getItem(WORKSPACES_KEY);
+    const activeId = localStorage.getItem(ACTIVE_WORKSPACE_KEY) || "";
+    if (raw) {
+      const parsed = JSON.parse(raw) as Workspace[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const valid = activeId && parsed.some((w) => w.id === activeId) ? activeId : parsed[0].id;
+        return { workspaces: parsed, activeId: valid };
+      }
+    }
+  } catch {
+    /* fall through to migration */
+  }
+  // Migrate: read legacy roots[] from localStorage and wrap as "默认"
+  let legacyRoots: string[] = [];
+  try {
+    const raw = localStorage.getItem("roots");
+    if (raw) legacyRoots = JSON.parse(raw);
+  } catch {
+    /* */
+  }
+  const ws: Workspace = {
+    id: genId(),
+    name: "默认",
+    roots: Array.isArray(legacyRoots) ? legacyRoots : [],
+    createdAt: Date.now(),
+  };
+  localStorage.setItem(WORKSPACES_KEY, JSON.stringify([ws]));
+  localStorage.setItem(ACTIVE_WORKSPACE_KEY, ws.id);
+  return { workspaces: [ws], activeId: ws.id };
+}
+
+function persistWorkspaces(workspaces: Workspace[], activeId: string) {
+  try {
+    localStorage.setItem(WORKSPACES_KEY, JSON.stringify(workspaces));
+    localStorage.setItem(ACTIVE_WORKSPACE_KEY, activeId);
+  } catch {
+    /* */
+  }
+}
+
+const RECENT_FILES_KEY = "recentFiles:v1";
+const RECENT_FILES_MAX = 20;
+function loadRecentFiles(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_FILES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === "string").slice(0, RECENT_FILES_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+function persistRecentFiles(list: string[]) {
+  try {
+    localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(list));
+  } catch {}
+}
+
+// Derive roots from active workspace (overrides legacy loadRoots() flow)
+const __initWs = loadWorkspaces();
+const __initRoots = __initWs.workspaces.find((w) => w.id === __initWs.activeId)?.roots ?? [];
+
 export const useStore = create<State>((set, get) => ({
-  roots: loadRoots(),
+  roots: __initRoots,
   trees: {},
-  expanded: new Set<string>(loadRoots()),
+  expanded: new Set<string>(__initRoots),
   openFiles: [],
   activePath: null,
   history: [],
@@ -224,30 +314,38 @@ export const useStore = create<State>((set, get) => ({
   semanticSearching: false,
   closeDirtyPath: null,
   recoveredOnceAt: null,
+  recentFiles: loadRecentFiles(),
+  externalChangedPaths: [],
+  ...(() => {
+    const { workspaces, activeId } = loadWorkspaces();
+    return { workspaces, activeWorkspaceId: activeId };
+  })(),
   quickOpenVisible: false,
 
   addFolder: async () => {
     const picked = await open({ directory: true, multiple: false });
     if (typeof picked !== "string") return;
-    const { roots, expanded } = get();
+    const { roots, expanded, workspaces, activeWorkspaceId } = get();
     if (roots.includes(picked)) return;
     const newRoots = [...roots, picked];
     const newExp = new Set(expanded);
     newExp.add(picked);
-    set({ roots: newRoots, expanded: newExp });
+    const nextWs = syncRootsToActiveWorkspace(workspaces, activeWorkspaceId, newRoots);
+    set({ roots: newRoots, expanded: newExp, workspaces: nextWs });
     saveRoots(newRoots);
     await get().refreshTree(picked);
   },
 
   removeFolder: (rootPath) => {
-    const { roots, trees, expanded } = get();
+    const { roots, trees, expanded, workspaces, activeWorkspaceId } = get();
     const newRoots = roots.filter((r) => r !== rootPath);
     const newTrees = { ...trees };
     delete newTrees[rootPath];
     const newExp = new Set(
       [...expanded].filter((p) => p !== rootPath && !p.startsWith(rootPath + "/") && !p.startsWith(rootPath + "\\")),
     );
-    set({ roots: newRoots, trees: newTrees, expanded: newExp });
+    const nextWs = syncRootsToActiveWorkspace(workspaces, activeWorkspaceId, newRoots);
+    set({ roots: newRoots, trees: newTrees, expanded: newExp, workspaces: nextWs });
     saveRoots(newRoots);
   },
 
@@ -277,17 +375,29 @@ export const useStore = create<State>((set, get) => ({
     // unsaved edits.
     const files = get().openFiles;
     const updates: Record<string, string> = {};
+    const externallyChangedDirty: string[] = [];
     await Promise.all(
       files.map(async (f) => {
-        if (f.content !== f.savedContent) return; // dirty — skip
         try {
           const fresh = await readTextFile(f.path);
-          if (fresh !== f.savedContent) updates[f.path] = fresh;
+          const dirty = f.content !== f.savedContent;
+          if (dirty) {
+            // Dirty + disk changed → external conflict, surface banner
+            if (fresh !== f.savedContent) externallyChangedDirty.push(f.path);
+          } else if (fresh !== f.savedContent) {
+            updates[f.path] = fresh;
+          }
         } catch {
           // file may have been deleted externally — keep in tab, user decides
         }
       }),
     );
+    if (externallyChangedDirty.length) {
+      // Merge into externalChangedPaths (dedup)
+      const current = new Set(get().externalChangedPaths);
+      externallyChangedDirty.forEach((p) => current.add(p));
+      set({ externalChangedPaths: Array.from(current) });
+    }
     if (Object.keys(updates).length) {
       const next = get().openFiles.map((f) =>
         updates[f.path] !== undefined
@@ -306,6 +416,11 @@ export const useStore = create<State>((set, get) => ({
   },
 
   openFile: async (path, name) => {
+    // Track recents (newest first, deduped, capped)
+    const recents = [path, ...get().recentFiles.filter((p) => p !== path)].slice(0, RECENT_FILES_MAX);
+    set({ recentFiles: recents });
+    persistRecentFiles(recents);
+
     const existing = get().openFiles.find((f) => f.path === path);
     if (existing) {
       get().setActive(path);
@@ -347,6 +462,112 @@ export const useStore = create<State>((set, get) => ({
       active = history.length ? history[historyIndex] : files[files.length - 1]?.path ?? null;
     }
     set({ openFiles: files, activePath: active, history, historyIndex });
+  },
+
+  reorderTabs: (fromIdx, toIdx) => {
+    const files = get().openFiles.slice();
+    if (fromIdx < 0 || fromIdx >= files.length || toIdx < 0 || toIdx >= files.length) return;
+    const [moved] = files.splice(fromIdx, 1);
+    files.splice(toIdx, 0, moved);
+    set({ openFiles: files });
+  },
+
+  reorderMissions: (fromIdx, toIdx) => {
+    const missions = get().missions.slice();
+    if (fromIdx < 0 || fromIdx >= missions.length || toIdx < 0 || toIdx >= missions.length) return;
+    const [moved] = missions.splice(fromIdx, 1);
+    missions.splice(toIdx, 0, moved);
+    set({ missions });
+    persistMissions(missions);
+  },
+
+  // ─── Workspaces ─────────────────────────────────────────────
+  createWorkspace: async (name) => {
+    const trimmed = name.trim() || `工作区 ${get().workspaces.length + 1}`;
+    const ws: Workspace = {
+      id: genId(),
+      name: trimmed,
+      roots: [],
+      createdAt: Date.now(),
+    };
+    const next = [...get().workspaces, ws];
+    persistWorkspaces(next, ws.id);
+    // Save outgoing workspace state implicitly (no dirty save — we flush below)
+    window.dispatchEvent(new Event("markflow:flush-editor"));
+    flushAllAutosaves();
+    await get().saveAllDirty();
+    // Switch into the new workspace
+    set({
+      workspaces: next,
+      activeWorkspaceId: ws.id,
+      roots: [],
+      trees: {},
+      expanded: new Set<string>(),
+      openFiles: [],
+      activePath: null,
+      history: [],
+      historyIndex: -1,
+    });
+    saveRoots([]);
+  },
+
+  switchWorkspace: async (id) => {
+    const target = get().workspaces.find((w) => w.id === id);
+    if (!target || id === get().activeWorkspaceId) return;
+    // Flush + save outgoing dirty buffers before swapping
+    window.dispatchEvent(new Event("markflow:flush-editor"));
+    flushAllAutosaves();
+    await get().saveAllDirty();
+    persistWorkspaces(get().workspaces, target.id);
+    set({
+      activeWorkspaceId: target.id,
+      roots: target.roots,
+      trees: {},
+      expanded: new Set<string>(target.roots),
+      openFiles: [],
+      activePath: null,
+      history: [],
+      historyIndex: -1,
+    });
+    saveRoots(target.roots);
+    // Refresh trees for the new workspace
+    await get().refreshAllTrees();
+  },
+
+  renameWorkspace: (id, name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const next = get().workspaces.map((w) => (w.id === id ? { ...w, name: trimmed } : w));
+    persistWorkspaces(next, get().activeWorkspaceId);
+    set({ workspaces: next });
+  },
+
+  deleteWorkspace: async (id) => {
+    const all = get().workspaces;
+    if (all.length <= 1) return;                       // refuse to delete the last one
+    const remaining = all.filter((w) => w.id !== id);
+    const wasActive = get().activeWorkspaceId === id;
+    if (wasActive) {
+      // Switch to the first remaining workspace
+      const target = remaining[0];
+      persistWorkspaces(remaining, target.id);
+      set({
+        workspaces: remaining,
+        activeWorkspaceId: target.id,
+        roots: target.roots,
+        trees: {},
+        expanded: new Set<string>(target.roots),
+        openFiles: [],
+        activePath: null,
+        history: [],
+        historyIndex: -1,
+      });
+      saveRoots(target.roots);
+      await get().refreshAllTrees();
+    } else {
+      persistWorkspaces(remaining, get().activeWorkspaceId);
+      set({ workspaces: remaining });
+    }
   },
 
   setContent: (path, content) => {
@@ -398,6 +619,36 @@ export const useStore = create<State>((set, get) => ({
   saveAllDirty: async () => {
     const dirty = get().openFiles.filter((f) => f.content !== f.savedContent);
     await Promise.all(dirty.map((f) => get().saveFile(f.path).catch(() => {})));
+  },
+
+  /** Check if any open files were modified externally since the editor's
+   *  last known savedContent. Designed to run on window focus.
+   *  - Clean tabs with changed disk → silently updated
+   *  - Dirty tabs with changed disk → surfaced via externalChangedPaths
+   */
+  detectExternalChanges: async () => {
+    // reloadCleanOpenFiles already does both: silent update for clean,
+    // adds to externalChangedPaths for dirty. Just delegate.
+    await get().reloadCleanOpenFiles();
+  },
+
+  /** User picked an action on an externally-modified-while-dirty file. */
+  resolveExternalChange: async (path, action) => {
+    if (action === "reload") {
+      // Discard local edits, load fresh from disk
+      try {
+        const fresh = await readTextFile(path);
+        const files = get().openFiles.map((f) =>
+          f.path === path ? { ...f, content: fresh, savedContent: fresh } : f,
+        );
+        set({ openFiles: files });
+      } catch (e) {
+        console.warn("[resolveExternalChange] reload failed", e);
+      }
+    }
+    // For "keep": leave content alone; the user will hit Cmd+S → overwrites disk
+    const remaining = get().externalChangedPaths.filter((p) => p !== path);
+    set({ externalChangedPaths: remaining });
   },
 
   requestCloseFile: (path) => {
@@ -538,6 +789,44 @@ export const useStore = create<State>((set, get) => ({
     set({ openFiles: files, activePath: active });
     const root = rootOf(get().roots, parent);
     if (root) await get().refreshTree(root);
+  },
+
+  /** Move a file or folder into a target directory.
+   *  Guards: no-op when src parent == destDir, no-op when destDir is inside src
+   *  (would create a cycle), no-op when destination already has same-name child. */
+  movePath: async (srcPath, destDir) => {
+    const parent = dirname(srcPath);
+    if (parent === destDir) return;                                  // already there
+    if (destDir === srcPath || destDir.startsWith(srcPath + "/") ||
+        destDir.startsWith(srcPath + "\\")) {
+      console.warn("[movePath] refused: dest is inside source");
+      return;
+    }
+    const name = srcPath.split(/[\\/]/).pop() || srcPath;
+    const newPath = joinPath(destDir, name);
+    try {
+      await rename(srcPath, newPath);
+    } catch (e) {
+      console.warn("[movePath] rename failed", e);
+      return;
+    }
+    // Update open files referencing the moved path (handles both file and
+    // folder moves — anything inside a moved folder gets its prefix swapped).
+    const remap = (p: string) =>
+      p === srcPath || p.startsWith(srcPath + "/") || p.startsWith(srcPath + "\\")
+        ? newPath + p.slice(srcPath.length)
+        : p;
+    const files = get().openFiles.map((f) => {
+      const np = remap(f.path);
+      return np === f.path ? f : { ...f, path: np };
+    });
+    const active = get().activePath ? remap(get().activePath!) : null;
+    set({ openFiles: files, activePath: active });
+    // Refresh both source-side and dest-side trees (may be same root)
+    const srcRoot = rootOf(get().roots, parent);
+    const destRoot = rootOf(get().roots, destDir);
+    if (srcRoot) await get().refreshTree(srcRoot);
+    if (destRoot && destRoot !== srcRoot) await get().refreshTree(destRoot);
   },
 
   toggleTheme: () => {

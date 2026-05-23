@@ -14,7 +14,7 @@ export function SearchPanel() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-3 pt-3 pb-2">
+      <div className="px-4 pt-4 pb-3">
         <span className="geek-label">search</span>
       </div>
       <div className="px-3 pb-3">
@@ -28,7 +28,7 @@ export function SearchPanel() {
               if (e.key === "Enter") runSearch();
             }}
             placeholder="> search content"
-            className="bg-transparent flex-1 outline-none text-[13px] placeholder:text-[var(--color-text-subtle)] font-mono"
+            className="bg-transparent flex-1 outline-none text-[13px] placeholder:text-[var(--color-text-subtle)]"
           />
         </div>
         {searchQuery && (

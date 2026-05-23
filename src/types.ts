@@ -28,6 +28,13 @@ export type FileKind =
   | "code"
   | "unknown";
 
+export interface Workspace {
+  id: string;
+  name: string;
+  roots: string[];
+  createdAt: number;
+}
+
 export interface SearchHit {
   path: string;
   line: number;
