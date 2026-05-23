@@ -1527,67 +1527,52 @@
   margin-bottom: 0;
 }
 
-/* ─── Lists — flexbox-aligned counter markers
-   Native ::marker has unpredictable baseline behavior across browsers,
-   and `position: absolute; top: 0` markers float above text because
-   line-box top != first-baseline. Flexbox with `align-items: baseline`
-   is the only reliable way: the browser computes the first text baseline
-   for the content and aligns the marker (as a flex item) to it. */
+/* ─── Lists — native ::marker, baseline-aligned by default
+   Browser-native rendering for ol/ul. Modern browsers (Safari 11.1+, Chrome
+   86+) align ::marker to the first-line baseline of list-item content
+   automatically. The critical pieces are:
+     1. Keep `list-style-position: outside` (marker in the padding area)
+     2. Provide enough `padding-left` for marker + breathing room
+     3. Zero `<p>` margins inside `<li>` so the first line starts at li's
+        content-box top (where the marker is aligned to). */
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
-  list-style: none;
-  padding-left: 0;
+  padding-left: 1.8rem;
   margin: 0.4rem 0;
 }
+.milkdown .ProseMirror ul {
+  list-style: disc outside;
+}
 .milkdown .ProseMirror ol {
-  counter-reset: mf-ol;
+  list-style: decimal outside;
 }
 .milkdown .ProseMirror li {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0 0.5rem;
   margin: 0.12rem 0;
 }
-.milkdown .ProseMirror ol > li {
-  counter-increment: mf-ol;
-}
-.milkdown .ProseMirror ol > li::before {
-  content: counter(mf-ol) ".";
-  flex: 0 0 1.5rem;
-  text-align: right;
+.milkdown .ProseMirror ol > li::marker {
   color: var(--color-text-muted);
-  font-feature-settings: "tnum";
   font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
-.milkdown .ProseMirror ul > li::before {
-  content: "•";
-  flex: 0 0 1.5rem;
-  text-align: center;
+.milkdown .ProseMirror ul > li::marker {
   color: var(--color-text-subtle);
-  font-size: 1.1em;
-  line-height: 1;
 }
-/* Content cells take the remaining width on the same flex line as the marker */
-.milkdown .ProseMirror li > p,
-.milkdown .ProseMirror li > div:not([data-task-list-item-checkbox]) {
+/* Critical: zero the <p> margin inside <li>. Without this, ProseMirror
+   would render the first <p> with its normal 0.5rem top margin, pushing
+   text below where the native ::marker is anchored, breaking alignment. */
+.milkdown .ProseMirror li > p {
   margin: 0;
-  flex: 1 1 0;
-  min-width: 0;
 }
-/* Nested lists and additional paragraphs wrap to a new flex line indented
-   under the content (not under the marker) */
-.milkdown .ProseMirror li > ul,
-.milkdown .ProseMirror li > ol {
-  flex: 1 1 100%;
-  margin-left: calc(1.5rem + 0.5rem);
-  margin-top: 0.12rem;
-}
-.milkdown .ProseMirror li > p + p {
-  flex: 1 1 100%;
-  margin-left: calc(1.5rem + 0.5rem);
+.milkdown .ProseMirror li > p + p,
+.milkdown .ProseMirror li > p + ul,
+.milkdown .ProseMirror li > p + ol {
   margin-top: 0.3rem;
+}
+.milkdown .ProseMirror ul ul,
+.milkdown .ProseMirror ol ol,
+.milkdown .ProseMirror ul ol,
+.milkdown .ProseMirror ol ul {
+  margin: 0.12rem 0;
 }
 
 /* Task list — flex layout for reliable checkbox+text baseline alignment.
@@ -1598,18 +1583,9 @@
    variable tweaks. */
 .milkdown .ProseMirror ul li[data-task-list-item] {
   list-style: none;
-  /* Override the base li flex rule for checkbox alignment.
-     base: align-items: baseline → checkbox would sink below text;
-     we want align-items: flex-start so the checkbox lines up with the
-     first line cap-height. */
+  margin-left: -1.7rem;     /* cancel ul padding-left so checkbox sits flush */
   display: flex;
   align-items: flex-start;
-  flex-wrap: nowrap;
-  gap: 0;
-}
-/* Suppress the custom bullet ::before — checkbox takes the marker slot */
-.milkdown .ProseMirror ul > li[data-task-list-item]::before {
-  display: none;
 }
 .milkdown .ProseMirror ul li[data-task-list-item] > input[type="checkbox"] {
   /* (font 15px * line-height 1.45 = 21.75px line) - 13px box = 8.75px slack,
