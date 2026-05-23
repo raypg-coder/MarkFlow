@@ -1527,24 +1527,26 @@
   margin-bottom: 0;
 }
 
-/* ─── Lists — custom counter markers for perfect baseline alignment
-   Native ::marker has notorious cross-browser quirks: marker line-box
-   doesn't always match the first-line baseline of the text, and inline
-   code chips inside the li can visually offset the line. Custom ::before
-   markers with absolute positioning sit exactly at top:0 of the li (same
-   as the first line of text when li > p margin is zeroed), giving
-   pixel-perfect alignment. */
+/* ─── Lists — flexbox-aligned counter markers
+   Native ::marker has unpredictable baseline behavior across browsers,
+   and `position: absolute; top: 0` markers float above text because
+   line-box top != first-baseline. Flexbox with `align-items: baseline`
+   is the only reliable way: the browser computes the first text baseline
+   for the content and aligns the marker (as a flex item) to it. */
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
   list-style: none;
-  padding-left: 1.7rem;
+  padding-left: 0;
   margin: 0.4rem 0;
 }
 .milkdown .ProseMirror ol {
   counter-reset: mf-ol;
 }
 .milkdown .ProseMirror li {
-  position: relative;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
   margin: 0.12rem 0;
 }
 .milkdown .ProseMirror ol > li {
@@ -1552,48 +1554,40 @@
 }
 .milkdown .ProseMirror ol > li::before {
   content: counter(mf-ol) ".";
-  position: absolute;
-  left: -1.7rem;
-  top: 0;
-  width: 1.3rem;
-  padding-right: 0.4rem;
+  flex: 0 0 1.5rem;
   text-align: right;
   color: var(--color-text-muted);
   font-feature-settings: "tnum";
   font-weight: 500;
-  font-size: inherit;
-  line-height: inherit;
-  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 .milkdown .ProseMirror ul > li::before {
   content: "•";
-  position: absolute;
-  left: -1.7rem;
-  top: 0;
-  width: 1.3rem;
-  padding-right: 0.4rem;
+  flex: 0 0 1.5rem;
   text-align: center;
   color: var(--color-text-subtle);
-  font-size: inherit;
-  line-height: inherit;
-  pointer-events: none;
+  font-size: 1.1em;
+  line-height: 1;
 }
-/* Kill p margins inside list items so the first text line sits at the
-   li's top (matching ::before's top:0). Multi-paragraph items keep a
-   small gap between consecutive paragraphs. */
-.milkdown .ProseMirror li > p {
+/* Content cells take the remaining width on the same flex line as the marker */
+.milkdown .ProseMirror li > p,
+.milkdown .ProseMirror li > div:not([data-task-list-item-checkbox]) {
   margin: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
-.milkdown .ProseMirror li > p + p,
-.milkdown .ProseMirror li > p + ul,
-.milkdown .ProseMirror li > p + ol {
+/* Nested lists and additional paragraphs wrap to a new flex line indented
+   under the content (not under the marker) */
+.milkdown .ProseMirror li > ul,
+.milkdown .ProseMirror li > ol {
+  flex: 1 1 100%;
+  margin-left: calc(1.5rem + 0.5rem);
+  margin-top: 0.12rem;
+}
+.milkdown .ProseMirror li > p + p {
+  flex: 1 1 100%;
+  margin-left: calc(1.5rem + 0.5rem);
   margin-top: 0.3rem;
-}
-.milkdown .ProseMirror ul ul,
-.milkdown .ProseMirror ol ol,
-.milkdown .ProseMirror ul ol,
-.milkdown .ProseMirror ol ul {
-  margin: 0.12rem 0;
 }
 
 /* Task list — flex layout for reliable checkbox+text baseline alignment.
@@ -1604,9 +1598,14 @@
    variable tweaks. */
 .milkdown .ProseMirror ul li[data-task-list-item] {
   list-style: none;
-  margin-left: -1.5em;
+  /* Override the base li flex rule for checkbox alignment.
+     base: align-items: baseline → checkbox would sink below text;
+     we want align-items: flex-start so the checkbox lines up with the
+     first line cap-height. */
   display: flex;
   align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 0;
 }
 /* Suppress the custom bullet ::before — checkbox takes the marker slot */
 .milkdown .ProseMirror ul > li[data-task-list-item]::before {
