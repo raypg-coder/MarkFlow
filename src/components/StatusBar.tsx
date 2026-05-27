@@ -6,6 +6,9 @@ export function StatusBar() {
   const { openFiles, activePath, appVersion, updateState, setUpdateState } = useStore();
   const file = openFiles.find((f) => f.path === activePath);
 
+  // Only show the font-size control when a markdown file is active
+  const showFontControl = !!file && file.kind === "markdown";
+
   if (!file) {
     return (
       <div className="app-statusbar chrome-fade chrome-fade-bottom h-7 flex items-center px-4 text-[11px] gap-3">
@@ -48,11 +51,46 @@ export function StatusBar() {
       ) : (
         <span className="pill pill-ok">● saved</span>
       )}
+      {showFontControl && (
+        <>
+          <Sep />
+          <FontSizeControl />
+        </>
+      )}
       <Sep />
       <AudioControl />
       <Sep />
       <UpdatePill appVersion={appVersion} state={updateState} setState={setUpdateState} />
     </div>
+  );
+}
+
+function FontSizeControl() {
+  const fontSize = useStore((s) => s.editorFontSize);
+  const bump = useStore((s) => s.bumpEditorFontSize);
+  const reset = useStore((s) => s.resetEditorFontSize);
+  return (
+    <span className="flex items-center gap-0.5" title="字体大小 (⌘+ / ⌘- / ⌘0)">
+      <button
+        onClick={() => bump(-1)}
+        className="px-1 rounded text-[var(--chrome-text-muted)] hover:text-[var(--chrome-text)] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)] text-[12px] leading-none"
+      >
+        A−
+      </button>
+      <button
+        onClick={reset}
+        className="px-1 text-[var(--chrome-text)] tabular-nums hover:text-[var(--chrome-accent)]"
+        title="重置 (⌘0)"
+      >
+        {fontSize}
+      </button>
+      <button
+        onClick={() => bump(1)}
+        className="px-1 rounded text-[var(--chrome-text-muted)] hover:text-[var(--chrome-text)] hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)] text-[13px] leading-none"
+      >
+        A+
+      </button>
+    </span>
   );
 }
 

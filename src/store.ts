@@ -66,6 +66,8 @@ interface State {
   workspaces: Workspace[];              // named collections of root folders
   activeWorkspaceId: string;            // currently selected workspace id
   quickOpenVisible: boolean;            // Cmd+P file switcher modal
+  editorFontSize: number;               // markdown editor body font px (zoomable)
+  findOpen: boolean;                     // in-document find bar (Cmd+F)
 
   addFolder: () => Promise<void>;
   removeFolder: (rootPath: string) => void;
@@ -84,6 +86,10 @@ interface State {
   closeFile: (path: string) => void;
   reorderTabs: (fromIdx: number, toIdx: number) => void;
   reorderMissions: (fromIdx: number, toIdx: number) => void;
+  setEditorFontSize: (px: number) => void;
+  bumpEditorFontSize: (delta: number) => void;
+  resetEditorFontSize: () => void;
+  setFindOpen: (v: boolean) => void;
   createWorkspace: (name: string) => Promise<void>;
   switchWorkspace: (id: string) => Promise<void>;
   renameWorkspace: (id: string, name: string) => void;
@@ -253,6 +259,24 @@ function persistWorkspaces(workspaces: Workspace[], activeId: string) {
 
 const RECENT_FILES_KEY = "recentFiles:v1";
 const RECENT_FILES_MAX = 20;
+
+// ─── Editor font size ───────────────────────────────────────
+const FONT_SIZE_KEY = "editorFontSize:v1";
+const FONT_SIZE_DEFAULT = 15;
+const FONT_SIZE_MIN = 11;
+const FONT_SIZE_MAX = 28;
+
+function loadFontSize(): number {
+  const raw = Number(localStorage.getItem(FONT_SIZE_KEY));
+  if (Number.isFinite(raw) && raw >= FONT_SIZE_MIN && raw <= FONT_SIZE_MAX) return raw;
+  return FONT_SIZE_DEFAULT;
+}
+function applyFontSize(px: number) {
+  document.documentElement.style.setProperty("--editor-font-size", `${px}px`);
+}
+function clampFontSize(px: number): number {
+  return Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, Math.round(px)));
+}
 function loadRecentFiles(): string[] {
   try {
     const raw = localStorage.getItem(RECENT_FILES_KEY);
@@ -316,6 +340,8 @@ export const useStore = create<State>((set, get) => ({
   recoveredOnceAt: null,
   recentFiles: loadRecentFiles(),
   externalChangedPaths: [],
+  editorFontSize: loadFontSize(),
+  findOpen: false,
   ...(() => {
     const { workspaces, activeId } = loadWorkspaces();
     return { workspaces, activeWorkspaceId: activeId };
@@ -480,6 +506,25 @@ export const useStore = create<State>((set, get) => ({
     set({ missions });
     persistMissions(missions);
   },
+
+  setEditorFontSize: (px) => {
+    const v = clampFontSize(px);
+    applyFontSize(v);
+    localStorage.setItem(FONT_SIZE_KEY, String(v));
+    set({ editorFontSize: v });
+  },
+  bumpEditorFontSize: (delta) => {
+    const v = clampFontSize(get().editorFontSize + delta);
+    applyFontSize(v);
+    localStorage.setItem(FONT_SIZE_KEY, String(v));
+    set({ editorFontSize: v });
+  },
+  resetEditorFontSize: () => {
+    applyFontSize(FONT_SIZE_DEFAULT);
+    localStorage.setItem(FONT_SIZE_KEY, String(FONT_SIZE_DEFAULT));
+    set({ editorFontSize: FONT_SIZE_DEFAULT });
+  },
+  setFindOpen: (v) => set({ findOpen: v }),
 
   // ─── Workspaces ─────────────────────────────────────────────
   createWorkspace: async (name) => {

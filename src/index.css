@@ -1111,7 +1111,7 @@
   outline: none;
   min-height: 60vh;
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: var(--editor-font-size, 15px);
   line-height: 1.45;
   color: var(--color-text);
   caret-color: var(--color-accent);
@@ -1525,6 +1525,16 @@
 }
 .milkdown .ProseMirror blockquote > :last-child {
   margin-bottom: 0;
+}
+
+/* ─── In-document find (Cmd+F) highlights via CSS Custom Highlight API ── */
+::highlight(mf-find) {
+  background-color: color-mix(in oklab, var(--color-accent) 30%, transparent);
+  border-radius: 2px;
+}
+::highlight(mf-find-active) {
+  background-color: var(--color-warning);
+  color: #1a1a1a;
 }
 
 /* ─── Lists — native ::marker, baseline-aligned by default

@@ -25,6 +25,7 @@ import { TabBar } from "./components/TabBar";
 import { Editor } from "./components/Editor";
 import { SearchPanel } from "./components/SearchPanel";
 import { StatusBar } from "./components/StatusBar";
+import { FindBar } from "./components/FindBar";
 import { Ribbon } from "./components/Ribbon";
 import { RightSidebar } from "./components/RightSidebar";
 import { SettingsModal } from "./components/SettingsModal";
@@ -64,6 +65,14 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  // Apply persisted editor font size on startup (CSS var on :root)
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--editor-font-size",
+      `${useStore.getState().editorFontSize}px`,
+    );
+  }, []);
 
   useEffect(() => {
     useStore.getState().restoreTrees();
@@ -284,6 +293,24 @@ function App() {
       if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         setSidebarView("search");
+      }
+      // Cmd+F — in-document find bar
+      if (mod && !e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        useStore.getState().setFindOpen(true);
+      }
+      // Cmd+= / Cmd++ — increase editor font; Cmd+- decrease; Cmd+0 reset
+      if (mod && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        useStore.getState().bumpEditorFontSize(1);
+      }
+      if (mod && e.key === "-") {
+        e.preventDefault();
+        useStore.getState().bumpEditorFontSize(-1);
+      }
+      if (mod && e.key === "0") {
+        e.preventDefault();
+        useStore.getState().resetEditorFontSize();
       }
       if (mod && e.key === "\\") {
         e.preventDefault();
@@ -653,7 +680,8 @@ function App() {
         )}
 
         {/* Editor column */}
-        <div className="flex-1 flex flex-col min-w-0 app-panel">
+        <div className="flex-1 flex flex-col min-w-0 app-panel relative">
+          <FindBar />
           <Editor />
           <StatusBar />
         </div>
