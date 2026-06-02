@@ -35,31 +35,24 @@ interface RowProps {
 }
 
 function FileIcon({ name }: { name: string }) {
+  // Editorial Modernist · single muted text tone, type indicated by a
+  // small letterform glyph next to the icon (markdown=M, python=py …).
+  // Subtle accent color only for markdown (the primary surface here).
   const kind = detectKind(name);
-  const color = {
-    markdown: "text-cyan-400/80",
-    python: "text-amber-500/80",
-    go: "text-sky-400/85",
-    env: "text-emerald-500/80",
-    text: "text-zinc-400/70",
-    json: "text-orange-500/80",
-    yaml: "text-rose-400/80",
-    toml: "text-purple-400/80",
-    sql: "text-cyan-500/80",
-    javascript: "text-yellow-400/90",
-    typescript: "text-blue-500/80",
-    code: "text-blue-400/80",
-    unknown: "text-zinc-400/60",
-  }[kind];
-  return <FileText size={13} className={color} strokeWidth={1.5} />;
+  const isMd = kind === "markdown";
+  return (
+    <FileText
+      size={13}
+      strokeWidth={1.5}
+      className={isMd ? "text-[var(--color-accent)]" : "text-[var(--color-text-subtle)]"}
+      style={{ opacity: isMd ? 0.9 : 0.7, flexShrink: 0 }}
+    />
+  );
 }
 
 function WireframeFolder({ open }: { open: boolean }) {
-  // Geometric wireframe folder; cyan glow when expanded
-  const color = open ? "var(--color-accent-2, #00ffff)" : "var(--color-text-muted)";
-  const glow = open
-    ? "drop-shadow(0 0 3px color-mix(in oklab, var(--color-accent-2, #00ffff) 60%, transparent))"
-    : "none";
+  // Editorial folder · burnt-sienna stroke when open, no neon glow.
+  const color = open ? "var(--color-accent)" : "var(--color-text-subtle)";
   return (
     <svg
       width="13"
@@ -68,7 +61,7 @@ function WireframeFolder({ open }: { open: boolean }) {
       fill="none"
       stroke={color}
       strokeWidth="1.25"
-      style={{ filter: glow, flexShrink: 0 }}
+      style={{ opacity: open ? 0.95 : 0.7, flexShrink: 0 }}
     >
       <path
         d={open
@@ -311,7 +304,18 @@ function WorkspaceSection({ rootPath }: { rootPath: string }) {
           className="text-[var(--color-text-subtle)] shrink-0 transition-transform duration-150"
           style={{ transform: open ? "rotate(90deg)" : "none" }}
         />
-        <span className="text-[11px] tracking-[0.08em] text-[var(--color-accent)] uppercase font-semibold truncate flex-1">
+        <span
+          className="truncate flex-1"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "16px",
+            letterSpacing: "-0.005em",
+            color: "var(--color-text)",
+            lineHeight: 1.2,
+          }}
+        >
           {displayName}
         </span>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">

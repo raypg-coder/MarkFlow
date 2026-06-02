@@ -14,6 +14,7 @@ import { sanitizeForCrepe } from "../utils/sanitize";
 import { wikilinkPlugin } from "../utils/milkdown-wikilink";
 import { imageGenPlugin } from "../utils/milkdown-image-gen";
 import { tagPlugin } from "../utils/milkdown-tag";
+import { sidenotePlugin } from "../utils/milkdown-sidenote";
 import { SelectionMenu } from "./SelectionMenu";
 import { AmbientLight } from "./AmbientLight";
 
@@ -106,6 +107,34 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
     renderFallbackEmbeds(fallbackRef.current, theme);
   }, [fallback, theme]);
 
+  // Editorial reading spine · drive CSS var from scroll position. Uses rAF
+  // for cheap throttling. Resize observer keeps it accurate when the
+  // window or font size changes the scroll range.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const total = el.scrollHeight - el.clientHeight;
+      const ratio = total > 0 ? Math.min(1, Math.max(0, el.scrollTop / total)) : 0;
+      el.style.setProperty("--reading-progress", `${(ratio * 100).toFixed(2)}%`);
+    };
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(update);
+    };
+    update();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [filePath]);
+
   // Cmd/Ctrl + click on a wikilink decoration → navigate
   useEffect(() => {
     const el = editorMountRef.current;
@@ -197,6 +226,7 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
       crepe.editor.use(wikilinkPlugin);
       crepe.editor.use(imageGenPlugin);
       crepe.editor.use(tagPlugin);
+      crepe.editor.use(sidenotePlugin);
     } catch (e) {
       console.warn("[MarkdownEditor] failed to register plugins", e);
     }
@@ -371,7 +401,9 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
 
   return (
     <div className="h-full flex flex-col bg-[var(--color-bg)] overflow-hidden">
-      <div ref={containerRef} className="flex-1 min-h-0 overflow-auto">
+      <div ref={containerRef} className="md-doc-scroller flex-1 min-h-0 overflow-auto relative">
+        {/* Editorial reading spine · right-edge progress mark */}
+        <div className="md-reading-spine" aria-hidden />
         <div className="md-doc-header">
           <h1 className="md-doc-title">{title}</h1>
           <div className="md-doc-meta">

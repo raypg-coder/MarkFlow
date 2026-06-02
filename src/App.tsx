@@ -53,6 +53,7 @@ function App() {
     rightSidebarView,
     setRightSidebarView,
     toggleRightSidebar,
+    roots,
   } = useStore();
 
   const [sidebarWidth, setSidebarWidth] = useState(244);
@@ -426,6 +427,22 @@ function App() {
   const activeFile = openFiles.find((f) => f.path === activePath);
   const canExport = activeFile?.kind === "markdown";
   const canSave = activeFile && activeFile.content !== activeFile.savedContent;
+
+  // Editorial breadcrumb · resolve activeFile.path against known workspace roots,
+  // then split into path segments. Each segment renders in italic serif with ›.
+  const breadcrumb = (() => {
+    if (!activeFile) return null;
+    const fp = activeFile.path;
+    // Pick the longest matching root so nested workspaces resolve correctly.
+    const root = roots
+      .filter((r) => fp.startsWith(r + "/") || fp === r)
+      .sort((a, b) => b.length - a.length)[0];
+    if (!root) return null;
+    const rootName = root.split("/").filter(Boolean).pop() ?? root;
+    const rel = fp === root ? "" : fp.slice(root.length + 1);
+    const parts = rel ? rel.split("/") : [];
+    return { rootName, parts };
+  })();
   const history = useStore((s) => s.history);
   const historyIndex = useStore((s) => s.historyIndex);
   const canBack = historyIndex > 0;
@@ -671,6 +688,51 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Editorial breadcrumb · thin italic-serif strip showing the path
+          of the active file. Hidden when nothing's open. */}
+      {breadcrumb && (
+        <div
+          className="shrink-0 flex items-center px-6 h-6 select-none"
+          style={{
+            background: "var(--color-bg-chrome)",
+            borderBottom: "1px solid var(--color-border)",
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "13px",
+            color: "var(--color-text-subtle)",
+            lineHeight: 1,
+            letterSpacing: "-0.005em",
+          }}
+        >
+          <span style={{ color: "var(--color-text)" }}>{breadcrumb.rootName}</span>
+          {breadcrumb.parts.map((p, i) => (
+            <span key={i} className="flex items-center">
+              <span
+                aria-hidden
+                style={{
+                  margin: "0 0.55em",
+                  fontStyle: "normal",
+                  color: "var(--color-text-faint)",
+                  fontSize: "11px",
+                }}
+              >
+                ›
+              </span>
+              <span
+                style={
+                  i === breadcrumb.parts.length - 1
+                    ? { color: "var(--color-accent)" }
+                    : undefined
+                }
+              >
+                {p}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Body */}
       <div className="flex flex-1 min-h-0">

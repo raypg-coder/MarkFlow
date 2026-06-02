@@ -1,18 +1,25 @@
 @import "tailwindcss";
 
-@theme {
-  /* —— content surface (light mode) —— */
-  --color-bg: #fafaf7;
-  --color-bg-soft: #f1f1ec;
-  --color-bg-muted: #e3e3dd;
-  --color-border: #d6d5ce;
-  --color-border-strong: #aaa9a0;
-  --color-text: #15151a;
-  --color-text-muted: #5a5a5e;
-  --color-text-subtle: #8d8d88;
+/* Editorial Modernist · Instrument Serif italic for display, Inter for UI */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
 
-  /* chrome inherits unless overridden */
-  --color-bg-chrome: #ecebe4;
+@theme {
+  /* ═══════════════════════════════════════════════════════
+     LIGHT MODE · "Warm Paper"
+     Inspiration: iA Writer + Anthropic Claude + 印刷品
+     ═══════════════════════════════════════════════════════ */
+  --color-bg: #F8F3E9;             /* 米白纸面 — 不刺眼 */
+  --color-bg-soft: #F2EBDC;        /* hover · alt-row */
+  --color-bg-muted: #E8DEC9;       /* inline code chip · active */
+  --color-border: #E0D5BD;
+  --color-border-strong: #C7B795;
+
+  --color-text: #13110D;           /* 墨黑 · 16:1 AAA */
+  --color-text-muted: #5C5341;     /* meta · 7:1 AAA */
+  --color-text-subtle: #8F8470;    /* tertiary · 5:1 AA */
+  --color-text-faint: #B5A98F;     /* 最弱 · 仅装饰 */
+
+  --color-bg-chrome: #F2EBDC;      /* 跟 bg-soft 同 (实色，不再玻璃) */
   --chrome-bg-soft: var(--color-bg-soft);
   --chrome-bg-muted: var(--color-bg-muted);
   --chrome-border: var(--color-border);
@@ -21,31 +28,33 @@
   --chrome-text-subtle: var(--color-text-subtle);
   --chrome-accent: var(--color-accent);
 
-  /* —— accent (light mode — matched to dark mode's blue+purple,
-       toned darker for AAA on cream bg) —— */
-  --color-accent:   #2563eb;     /* rich blue */
-  --color-accent-2: #2563eb;
-  --color-accent-3: #7c3aed;     /* deep purple */
-  --color-accent-soft: rgba(37, 99, 235, 0.12);
-  --color-accent-glow: rgba(37, 99, 235, 0.28);
-  --color-danger:   #d33046;
-  --color-success:  #16a34a;
-  --color-warning:  #d97706;
+  /* ── 单 accent · burnt sienna (印刷品红橙) ── */
+  --color-accent:   #C2410C;
+  --color-accent-2: #C2410C;
+  --color-accent-3: #C2410C;       /* 保留 var 名兼容旧代码，值统一 */
+  --color-accent-soft: rgba(194, 65, 12, 0.10);
+  --color-accent-glow: rgba(194, 65, 12, 0.22);
+  --color-danger:   #B91C1C;
+  --color-success:  #15803D;
+  --color-warning:  #B45309;
 
-  --md-violet: #7c3aed;
-  --md-amber: #d97706;
-  --md-rose: #be185d;
-  --md-teal: #0d9488;
-  --md-amber-soft: #fef3c7;
-  --md-rose-soft: #fce7f3;
+  /* markdown editorial colors (互用 accent · 不再多色) */
+  --md-violet: #7C3AED;
+  --md-amber:  #B45309;
+  --md-rose:   #BE185D;
+  --md-teal:   #0F766E;
+  --md-amber-soft: #FEF3C7;
+  --md-rose-soft:  #FCE7F3;
 
-  /* Glass surface tokens (no-op in light mode; defined for shared CSS rules) */
+  /* Glass tokens — 浅色基本无效，留作兼容 */
   --glass-bg: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.005));
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border: rgba(0, 0, 0, 0.06);
   --glass-blur: 0px;
 
-  --font-mono: "Fira Code", "JetBrains Mono", "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  /* ── Fonts ── */
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: "Instrument Serif", "Newsreader", Georgia, serif;
 }
 
 @layer base {
@@ -55,25 +64,23 @@
   }
   :root.dark {
     color-scheme: dark;
-    /* —— Modern productivity glass aesthetic
-       Inspired by Linear / Notion / contemporary dashboards.
-       Deep navy-purple base, soft blue+purple accents, OS-native
-       NSVisualEffectView vibrancy behind everything (macOS).
-       --color-bg is translucent so editor area sits over the OS frost. */
-    --color-bg: rgba(12, 14, 31, 0.78);  /* translucent navy over vibrancy */
-    --color-bg-soft: #161834;            /* solid — for popovers/modals */
-    --color-bg-muted: #1e2147;           /* solid — elevated/active */
-    --color-border: #2a2e52;
-    --color-border-strong: #3d4170;
+    /* ═══════════════════════════════════════════════════════
+       DARK MODE · "Matte Night"
+       Warm amber on deep matte black (Anthropic / Cursor lineage).
+       No more navy. No more vibrancy translucency. Solid surface.
+       ═══════════════════════════════════════════════════════ */
+    --color-bg: #0F0E0C;             /* 哑光黑 · 带 1% 暖调，不冷 */
+    --color-bg-soft: #18160F;        /* 侧栏 · hover */
+    --color-bg-muted: #1F1C13;       /* 选中 · code chip */
+    --color-border: #2A2519;
+    --color-border-strong: #3F3727;
 
-    /* Text — calibrated for the navy base */
-    --color-text: #ececf5;        /* body */
-    --color-text-muted: #a0a4c0;  /* meta — passes AAA */
-    --color-text-subtle: #696e8c; /* tertiary — passes AA */
+    --color-text: #F0EBE0;           /* 暖白墨色 */
+    --color-text-muted: #BBB098;     /* meta */
+    --color-text-subtle: #6F6852;    /* tertiary */
+    --color-text-faint: #4A4533;     /* 极弱 */
 
-    /* Chrome is fully transparent — NSVisualEffectView vibrancy fills it.
-       Topbar/statusbar/sidebars each layer their own glass gradient on top. */
-    --color-bg-chrome: transparent;
+    --color-bg-chrome: #18160F;      /* 同 bg-soft · 实色 */
     --chrome-bg-soft: var(--color-bg-soft);
     --chrome-bg-muted: var(--color-bg-muted);
     --chrome-border: var(--color-border);
@@ -82,32 +89,32 @@
     --chrome-text-subtle: var(--color-text-subtle);
     --chrome-accent: var(--color-accent);
 
-    /* —— Bright blue + soft purple accent pair —— */
-    --color-accent:   #4a7eff;     /* electric blue — primary */
-    --color-accent-2: #4a7eff;     /* alias */
-    --color-accent-3: #b194ff;     /* soft violet — secondary */
-    --color-accent-soft: rgba(74, 126, 255, 0.12);
-    --color-accent-glow: rgba(74, 126, 255, 0.40);
-    --color-danger:   #f56565;
-    --color-success:  #4ade80;     /* mint green — saved/ok */
-    --color-warning:  #fbbf24;
+    /* ── 单 accent · warm amber (暗色版 burnt sienna) ── */
+    --color-accent:   #F97316;
+    --color-accent-2: #F97316;
+    --color-accent-3: #F97316;       /* 单 accent 原则 */
+    --color-accent-soft: rgba(249, 115, 22, 0.14);
+    --color-accent-glow: rgba(249, 115, 22, 0.36);
+    --color-danger:   #F87171;
+    --color-success:  #4ADE80;
+    --color-warning:  #FBBF24;
 
     /* markdown editorial colors */
-    --md-violet: #b194ff;
-    --md-amber: #fbbf24;
-    --md-rose: #f472b6;
-    --md-teal: #2dd4bf;
+    --md-violet: #C4B5FD;
+    --md-amber:  #FBBF24;
+    --md-rose:   #F472B6;
+    --md-teal:   #5EEAD4;
     --md-amber-soft: #2a2118;
-    --md-rose-soft: #2a1a22;
-    --code-bg: #14163a;
+    --md-rose-soft:  #2a1a22;
+    --code-bg: #1F1C13;              /* 跟 bg-muted 同 · 实色 */
 
-    /* Glass surface tokens — used by chrome panels & modals */
-    --glass-bg: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-blur: 14px;
+    /* Glass tokens — 实色模式下基本仅做兼容，弱化模糊 */
+    --glass-bg: linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-blur: 0px;
   }
   :root:not(.dark) {
-    --code-bg: #f6f6f3;
+    --code-bg: #F2EBDC;              /* 跟 bg-soft 同 */
   }
   html, body, #root {
     height: 100%;
@@ -117,7 +124,6 @@
   body {
     background: var(--color-bg);
     color: var(--color-text);
-    /* Chrome UI = sans (Inter). Code / mono-numeric = explicit font-mono. */
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-size: 13px;
@@ -125,27 +131,31 @@
     font-feature-settings: "cv11" 1, "ss01" 1;
     position: relative;
   }
-  /* macOS NSVisualEffectView vibrancy fills behind the window. The body
-     and editor area apply a slight navy tint over the OS frost so text
-     stays readable on busy wallpapers, but the frosted glass still shines
-     through visibly at chrome zones. */
-  :root.dark body { background: rgba(12, 14, 31, 0.62); }
-  :root:not(.dark) body { background: rgba(250, 250, 247, 0.85); }
-  /* ─── Ambient gradient overlay (dark mode only)
-     Soft blue + purple radial glows at corners give the navy bg the
-     "modern dashboard" depth from the reference. Sits behind all UI
-     via z-index, no pointer events. */
+  /* ─── Editorial ambient ──────────────────────────────────────
+     Light: 几乎无形的纸面颗粒纹理 (SVG noise 3.5% 透明)
+     Dark : 暖橙 aurora 角落光晕 (从 navy/紫 改为 burnt sienna 系)
+     —— 任何时候不再有 NSVisualEffectView 玻璃漏出 */
+  :root:not(.dark) body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.5'/></svg>");
+    opacity: 0.035;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 0;
+  }
   :root.dark body::before {
     content: "";
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(ellipse 80% 50% at 95% -10%, rgba(74, 126, 255, 0.12), transparent 55%),
-      radial-gradient(ellipse 70% 50% at -10% 110%, rgba(177, 148, 255, 0.10), transparent 55%);
+      radial-gradient(ellipse 60% 50% at 90% -5%, rgba(249, 115, 22, 0.10), transparent 55%),
+      radial-gradient(ellipse 50% 40% at -5% 100%, rgba(249, 115, 22, 0.06), transparent 55%);
     pointer-events: none;
     z-index: 0;
   }
-  :root.dark #root {
+  #root {
     position: relative;
     z-index: 1;
   }
@@ -194,73 +204,19 @@
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
 }
-/* In dark mode the window has NSVisualEffectView vibrancy. We KEEP the
-   app shell transparent so the OS frosted glass actually shows through —
-   chrome panels (topbar/statusbar/sidebars) and the editor area each apply
-   their own translucent tints on top. */
-:root.dark .app-chrome {
-  background: transparent;
-}
+/* Editorial Modernist · 实色 chrome
+   舍弃 NSVisualEffectView 玻璃 / backdrop-filter blur，
+   全部用实色 + 1px hairline border 做层级。
+   暗模式仍用 ambient aurora 给暖度，但 chrome 自身不透明。 */
 .app-topbar {
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
   position: relative;
+  border-bottom: 1px solid var(--color-border);
 }
-:root.dark .app-topbar {
-  background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
-  border-bottom: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-}
-/* thin accent underline along the bottom of the topbar */
-.app-topbar::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklab, var(--color-accent) 25%, transparent) 25%,
-    color-mix(in oklab, var(--color-accent-3) 22%, transparent) 75%,
-    transparent
-  );
-  opacity: 0.5;
-  pointer-events: none;
-}
-:root.dark .app-topbar::after { display: none; }  /* glass border handles it */
-/* Light mode subtle glass — translucent white over cream */
-:root:not(.dark) .app-topbar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(8px) saturate(140%);
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
-}
-:root:not(.dark) .app-statusbar {
-  background: linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(8px) saturate(140%);
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
-}
-:root:not(.dark) .chrome-fade-left {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3)) !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(8px) saturate(140%);
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
-}
-:root:not(.dark) .chrome-fade-right {
-  background: linear-gradient(270deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3)) !important;
-  border-left: 1px solid rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(8px) saturate(140%);
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
-}
+.app-topbar::after { display: none; }    /* 去掉旧 accent 渐变光线 */
 .app-panel {
   background: var(--color-bg);
-}
-:root.dark .app-panel {
-  background: transparent;  /* show ambient gradient through */
 }
 .app-statusbar {
   background: var(--color-bg-chrome);
@@ -268,29 +224,16 @@
   font-family: var(--font-sans);
   font-feature-settings: "tnum" on, "cv11" 1;
   position: relative;
+  border-top: 1px solid var(--color-border);
 }
-:root.dark .app-statusbar {
-  background: linear-gradient(0deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
-  border-top: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+/* 侧栏 · 实色 chrome */
+.chrome-fade-left {
+  background: var(--color-bg-chrome) !important;
+  border-right: 1px solid var(--color-border);
 }
-
-/* Sidebars (left file/search/mission + right outline/backlinks/etc) and
-   the leftmost Ribbon strip — all use chrome-fade-* layout classes.
-   Apply glass surface in dark mode so the navy ambient gradient bleeds
-   through. Light mode keeps the existing solid bg. */
-:root.dark .chrome-fade-left {
-  background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)) !important;
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  border-right: 1px solid var(--glass-border);
-}
-:root.dark .chrome-fade-right {
-  background: linear-gradient(270deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)) !important;
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  border-left: 1px solid var(--glass-border);
+.chrome-fade-right {
+  background: var(--color-bg-chrome) !important;
+  border-left: 1px solid var(--color-border);
 }
 /* glow line at top of statusbar — light mode only (dark uses glass border) */
 :root:not(.dark) .app-statusbar::before {
@@ -652,31 +595,32 @@
   opacity: 0.85;
 }
 
-/* ── Ambient Light — soft 150px gradient halo following the caret ── */
+/* ── Ambient Light · Editorial — soft burnt-sienna halo following the caret ──
+   Single warm tone instead of pink+cyan. mix-blend-mode adapts per theme. */
 .ambient-light {
   position: fixed;
   pointer-events: none;
-  width: 300px;
-  height: 300px;
+  width: 280px;
+  height: 280px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   background:
-    radial-gradient(circle at 35% 50%, rgba(255, 0, 127, 0.04), transparent 55%),
-    radial-gradient(circle at 65% 50%, rgba(0, 255, 255, 0.04), transparent 55%);
-  filter: blur(20px);
+    radial-gradient(circle, color-mix(in oklab, var(--color-accent) 14%, transparent), transparent 60%);
+  filter: blur(28px);
   transition: top 220ms cubic-bezier(0.22, 1, 0.36, 1),
               left 220ms cubic-bezier(0.22, 1, 0.36, 1),
               opacity 400ms ease;
   z-index: 1;
   opacity: 0;
-  mix-blend-mode: screen;
+  mix-blend-mode: multiply;     /* light mode — warm wash on paper */
+}
+:root.dark .ambient-light {
+  mix-blend-mode: screen;       /* dark mode — luminous amber bloom */
+  background:
+    radial-gradient(circle, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 60%);
 }
 .ambient-light.visible { opacity: 1; }
-.zen-mode .ambient-light {
-  /* In zen mode, light shifts to CRT green for vibe consistency */
-  background:
-    radial-gradient(circle at 50% 50%, rgba(0, 255, 102, 0.05), transparent 55%);
-}
+.zen-mode .ambient-light { opacity: 0; }
 
 /* tiny edge indicator — top-right pink dot when focus mode active */
 .focus-mode-indicator {
@@ -734,46 +678,13 @@
   animation: cyber-breath 4s ease-in-out infinite;
 }
 
-/* Scan-line hover — cyber grid sweeping cyan band */
+/* Row hover · Editorial — single warm wash, no scan grid */
 .scan-row {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
   transition: background-color 160ms ease;
 }
 .scan-row:hover:not(.is-active) {
-  background: color-mix(in oklab, var(--color-accent) 6%, transparent);
-}
-.scan-row::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in oklab, var(--color-accent-2, #00ffff) 22%, transparent) 50%,
-      transparent 100%
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 12px,
-      color-mix(in oklab, var(--color-accent-2, #00ffff) 10%, transparent) 12px 13px
-    );
-  transform: translateX(-100%);
-  pointer-events: none;
-  z-index: 0;
-}
-.scan-row:hover::before {
-  animation: scan-sweep 1100ms ease-out forwards;
-}
-@keyframes scan-sweep {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(100%); }
-}
-.scan-row > * {
-  position: relative;
-  z-index: 1;
+  background: color-mix(in oklab, var(--color-text) 5%, transparent);
 }
 
 /* Active row — soft accent fill + thin accent left bar, no infinite pulse */
@@ -842,20 +753,14 @@
 .waveform-bar:nth-child(7) { animation-delay: 480ms; }
 .waveform-bar:nth-child(8) { animation-delay: 560ms; }
 
-/* Cursor — block shape (Chromium) + cyan caret-color + glow on focused paragraph
-   Note: native carets can't accept box-shadow, so the soft cyan halo is applied
-   to the currently-focused block via .has-focus styling. */
+/* Cursor · Editorial — slim bar (book caret), burnt-sienna color.
+   Reading-mode aesthetic; no halo glow on focused blocks (was cyberpunk). */
 .milkdown .ProseMirror {
-  caret-shape: block;
-  caret-color: var(--color-accent-2, #00ffff);
+  caret-color: var(--color-accent);
 }
-.milkdown .ProseMirror p.ProseMirror-selectednode,
-.milkdown .ProseMirror .has-focus {
-  text-shadow: 0 0 6px color-mix(in oklab, var(--color-accent-2, #00ffff) 18%, transparent);
-}
-/* Pulse the selection background slightly with cyan instead of green inside the editor */
+/* Selection · warm wash on paper (light) / amber wash on matte (dark) */
 .milkdown .ProseMirror ::selection {
-  background: color-mix(in oklab, var(--color-accent-2, #00ffff) 22%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 20%, transparent);
 }
 
 /* Git status indicators in file tree */
@@ -1122,79 +1027,63 @@
   background: color-mix(in oklab, var(--color-accent) 22%, transparent);
 }
 
-/* ─── Headings — single color, type-scale 1.25, fixed rem rhythm ──
-   Left accent bar on h1-h3 keeps the cyberpunk identity without the
-   gradient + hover-tag clutter. */
+/* ─── Headings · Editorial Modernist ────────────────────────────────
+   H1/H2 use Instrument Serif italic in a light weight — the printed-
+   page aesthetic. H3-H6 stay sans for clear hierarchy at small sizes.
+   No left rails — italic + size is the hierarchy. */
 .milkdown .ProseMirror h1,
 .milkdown .ProseMirror h2,
 .milkdown .ProseMirror h3,
 .milkdown .ProseMirror h4,
 .milkdown .ProseMirror h5,
 .milkdown .ProseMirror h6 {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  line-height: 1.3;
   color: var(--color-text);
-  letter-spacing: -0.015em;
   scroll-margin-top: 16px;
   position: relative;
 }
 
-/* h1/h2/h3 use a left "rail" — solid bar in light mode, gradient with
-   subtle glow in dark mode to match the chrome's glass aesthetic. */
 .milkdown .ProseMirror h1 {
-  font-size: 1.875rem;       /* 28.125px */
-  margin: 1.8rem 0 0.8rem;
-  padding-left: 0.7rem;
-  border-left: 3px solid var(--color-accent-3);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 2.5rem;          /* 40px */
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 1.6rem 0 0.9rem;
 }
 .milkdown .ProseMirror h1:first-child { margin-top: 0.2rem; }
 
 .milkdown .ProseMirror h2 {
-  font-size: 1.5rem;         /* 22.5px */
-  margin: 1.6rem 0 0.7rem;
-  padding-left: 0.6rem;
-  border-left: 2px solid var(--color-accent);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.875rem;        /* 30px */
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 1.8rem 0 0.7rem;
 }
 
 .milkdown .ProseMirror h3 {
-  font-size: 1.2rem;         /* 18px */
-  margin: 1.3rem 0 0.55rem;
-  padding-left: 0.55rem;
-  border-left: 2px solid var(--color-border-strong);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.15rem;         /* 18.4px */
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  margin: 1.4rem 0 0.5rem;
 }
 
-/* Dark mode — replace solid border with gradient + glow via box-shadow */
-:root.dark .milkdown .ProseMirror h1,
-:root.dark .milkdown .ProseMirror h2,
-:root.dark .milkdown .ProseMirror h3 {
-  border-left: none;
-  position: relative;
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 1.1rem 0 0.4rem;
+  color: var(--color-text-subtle);
 }
-:root.dark .milkdown .ProseMirror h1::before,
-:root.dark .milkdown .ProseMirror h2::before,
-:root.dark .milkdown .ProseMirror h3::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.2em;
-  bottom: 0.2em;
-  border-radius: 2px;
-}
-:root.dark .milkdown .ProseMirror h1::before {
-  width: 3px;
-  background: linear-gradient(180deg, var(--color-accent-3), color-mix(in oklab, var(--color-accent-3) 60%, transparent));
-  box-shadow: 0 0 12px -2px color-mix(in oklab, var(--color-accent-3) 60%, transparent);
-}
-:root.dark .milkdown .ProseMirror h2::before {
-  width: 2px;
-  background: linear-gradient(180deg, var(--color-accent), color-mix(in oklab, var(--color-accent) 60%, transparent));
-  box-shadow: 0 0 8px -2px color-mix(in oklab, var(--color-accent) 50%, transparent);
-}
-:root.dark .milkdown .ProseMirror h3::before {
-  width: 2px;
-  background: var(--color-border-strong);
-}
+.milkdown .ProseMirror h4 { font-size: 1rem; }
+.milkdown .ProseMirror h5 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.milkdown .ProseMirror h6 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-text-faint); }
 
 .milkdown .ProseMirror h4 {
   font-size: 1rem;
@@ -2501,3 +2390,140 @@ input:focus, textarea:focus {
   background: var(--color-bg-muted);
   font-weight: 600;
 }
+
+/* ============================================================
+   Editorial Modernist · Drop cap + Reading spine
+   Two signature moves from the v7 design language:
+
+   1. Drop cap — first paragraph after the doc header opens with a
+      large italic Instrument Serif initial in burnt sienna.
+   2. Reading spine — thin right-edge progress bar driven by the
+      `--reading-progress` CSS variable that MarkdownEditor updates
+      on scroll. Fixed inside the scroller via position: sticky so
+      the spine stays visible while content scrolls.
+   ============================================================ */
+
+/* Drop cap · only when the first node is a normal paragraph (so we
+   don't drop-cap headings). Skips when the doc starts with H1/H2/H3
+   because :first-of-type targets the first <p>, not the first child;
+   the `~ h1` sibling guard isn't possible in CSS, so we rely on
+   ProseMirror's behavior: most docs lead with a paragraph. */
+.milkdown .ProseMirror > p:first-of-type:not(:has(img)):first-letter {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 4.2em;
+  line-height: 0.82;
+  float: left;
+  margin: 0.08em 0.08em -0.05em 0;
+  padding-right: 0.04em;
+  color: var(--color-accent);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide the drop cap whenever the first node is actually a heading —
+   :has() is widely supported in WKWebView 16.4+ which Tauri uses. */
+.milkdown .ProseMirror:has(> h1:first-child, > h2:first-child, > h3:first-child)
+  > p:first-of-type:first-letter {
+  font-family: inherit;
+  font-style: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  float: none;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+}
+
+/* Reading spine · 2px laser strip on the right edge of the scroller.
+   The bar is solid below `--reading-progress` and faint above, giving
+   a real "how far am I" feel without a horizontal bar across the top. */
+.md-doc-scroller { --reading-progress: 0%; }
+
+.md-reading-spine {
+  position: sticky;
+  top: 0;
+  float: right;             /* keep out of the doc flow */
+  width: 2px;
+  height: 100vh;
+  margin-right: 4px;
+  margin-left: -2px;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    180deg,
+    var(--color-accent) 0%,
+    var(--color-accent) var(--reading-progress),
+    color-mix(in oklab, var(--color-border) 90%, transparent) var(--reading-progress),
+    color-mix(in oklab, var(--color-border) 90%, transparent) 100%
+  );
+  border-radius: 1px;
+  opacity: 0.7;
+  transition: opacity 200ms ease;
+}
+.md-doc-scroller:hover .md-reading-spine { opacity: 1; }
+
+/* Tone down in zen / focus mode — the spine becomes a single faint hair */
+.zen-mode .md-reading-spine,
+.focus-mode .md-reading-spine { opacity: 0.35; }
+
+/* ============================================================
+   Editorial Modernist · Tufte sidenotes
+   Syntax: `text ^[a sidenote in the right margin] more text`
+   Wired by src/utils/milkdown-sidenote.ts — adds decorations:
+   .mf-sidenote-bracket  → opening `^[` and closing `]` (hidden)
+   .mf-sidenote          → inner note text (styled below)
+   ============================================================ */
+
+/* Hide the `^[` and `]` brackets — they're authoring scaffolding */
+.mf-sidenote-bracket {
+  /* keep them clickable for cursor placement, but invisible */
+  font-size: 0;
+  opacity: 0;
+}
+
+/* Inline fallback · narrow screens get an italic-serif aside on the line */
+.mf-sidenote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.85em;
+  line-height: 1.35;
+  color: var(--color-text-subtle);
+  background: color-mix(in oklab, var(--color-accent) 5%, transparent);
+  padding: 0 0.4em;
+  margin: 0 0.15em;
+  border-radius: 3px;
+  border-left: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+}
+
+/* Wide screens · float into the right margin Tufte-style. We use a
+   negative-right offset so the note sits past the doc's right padding
+   without expanding the paragraph's box. The parent paragraph needs
+   `position: relative` for this to anchor correctly. */
+@media (min-width: 1100px) {
+  .milkdown .ProseMirror p,
+  .milkdown .ProseMirror li,
+  .milkdown .ProseMirror blockquote { position: relative; }
+
+  .mf-sidenote {
+    position: absolute;
+    right: clamp(-220px, calc(-1 * (100% - 65ch) / 2 + 12px), -12px);
+    top: 0;
+    width: 200px;
+    max-width: 18vw;
+    background: transparent;
+    border-left: 1px solid color-mix(in oklab, var(--color-accent) 70%, transparent);
+    padding: 0 0 0 0.65em;
+    margin: 0;
+    border-radius: 0;
+    /* hover lifts color slightly */
+    transition: color 180ms ease;
+  }
+  .mf-sidenote:hover { color: var(--color-text); }
+}
+
+/* Zen / focus mode — sidenotes recede */
+.zen-mode .mf-sidenote,
+.focus-mode .mf-sidenote { opacity: 0.5; }
