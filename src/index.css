@@ -1,120 +1,138 @@
 @import "tailwindcss";
 
-/* Editorial Modernist · Instrument Serif italic for display, Inter for UI */
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
+/* Tool typography · Inter (sans) + JetBrains Mono (mono). No serif/italic
+   display face — restrained, utilitarian. Borrowed from Mantle. Inter
+   is loaded via <link> in index.html for early font fetch. */
 
 @theme {
   /* ═══════════════════════════════════════════════════════
-     LIGHT MODE · "Warm Paper"
-     Inspiration: iA Writer + Anthropic Claude + 印刷品
+     LIGHT MODE · borrowed from Mantle
+     Pastel multi-radial wallpaper + glass chrome panels.
+     Apple blue accent. Cool purple-grey neutrals.
      ═══════════════════════════════════════════════════════ */
-  --color-bg: #F8F3E9;             /* 米白纸面 — 不刺眼 */
-  --color-bg-soft: #F2EBDC;        /* hover · alt-row */
-  --color-bg-muted: #E8DEC9;       /* inline code chip · active */
-  --color-border: #E0D5BD;
-  --color-border-strong: #C7B795;
+  --color-bg: #fdfdfe;             /* editor surface · 接近白，cool 调 */
+  --color-bg-soft: rgba(255, 255, 255, 0.55);   /* hover · alt-row (glass) */
+  --color-bg-muted: rgba(255, 255, 255, 0.7);   /* inline code chip · active */
+  --color-border: rgba(120, 110, 140, 0.18);
+  --color-border-strong: rgba(120, 110, 140, 0.32);
 
-  --color-text: #13110D;           /* 墨黑 · 16:1 AAA */
-  --color-text-muted: #5C5341;     /* meta · 7:1 AAA */
-  --color-text-subtle: #8F8470;    /* tertiary · 5:1 AA */
-  --color-text-faint: #B5A98F;     /* 最弱 · 仅装饰 */
+  --color-text: #1a1a22;           /* cool 墨黑 · ~14:1 AAA */
+  --color-text-muted: #52525e;     /* meta · ~8:1 AAA */
+  --color-text-subtle: #76768a;    /* tertiary · ~5:1 AA */
+  --color-text-faint: #a0a0b2;     /* 装饰 */
 
-  --color-bg-chrome: #F2EBDC;      /* 跟 bg-soft 同 (实色，不再玻璃) */
-  --chrome-bg-soft: var(--color-bg-soft);
-  --chrome-bg-muted: var(--color-bg-muted);
+  --color-bg-chrome: rgba(255, 255, 255, 0.32); /* glass chrome 透明度 */
+  --chrome-bg-soft: rgba(255, 255, 255, 0.5);
+  --chrome-bg-muted: rgba(255, 255, 255, 0.7);
   --chrome-border: var(--color-border);
   --chrome-text: var(--color-text);
   --chrome-text-muted: var(--color-text-muted);
   --chrome-text-subtle: var(--color-text-subtle);
   --chrome-accent: var(--color-accent);
 
-  /* ── 单 accent · burnt sienna (印刷品红橙) ── */
-  --color-accent:   #C2410C;
-  --color-accent-2: #C2410C;
-  --color-accent-3: #C2410C;       /* 保留 var 名兼容旧代码，值统一 */
-  --color-accent-soft: rgba(194, 65, 12, 0.10);
-  --color-accent-glow: rgba(194, 65, 12, 0.22);
-  --color-danger:   #B91C1C;
-  --color-success:  #15803D;
-  --color-warning:  #B45309;
+  /* ── 单 accent · Apple blue (macOS 原生感) ── */
+  --color-accent:   #0a84ff;
+  --color-accent-2: #0a84ff;
+  --color-accent-3: #0a84ff;
+  --color-accent-soft: rgba(10, 132, 255, 0.12);
+  --color-accent-glow: rgba(10, 132, 255, 0.35);
+  --color-danger:   #e0352b;
+  --color-success:  #1fa557;
+  --color-warning:  #c77700;
 
-  /* markdown editorial colors (互用 accent · 不再多色) */
+  /* markdown editorial colors */
   --md-violet: #7C3AED;
-  --md-amber:  #B45309;
+  --md-amber:  #c77700;
   --md-rose:   #BE185D;
   --md-teal:   #0F766E;
   --md-amber-soft: #FEF3C7;
   --md-rose-soft:  #FCE7F3;
 
-  /* Glass tokens — 浅色基本无效，留作兼容 */
-  --glass-bg: linear-gradient(135deg, rgba(0,0,0,0.02), rgba(0,0,0,0.005));
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-blur: 0px;
+  /* Wallpaper · 软 pastel 多 radial gradient (Mantle) */
+  --wallpaper:
+    radial-gradient(ellipse 50% 60% at 8% 0%, rgba(255, 183, 153, 0.55), transparent 55%),
+    radial-gradient(ellipse 55% 55% at 95% 8%, rgba(170, 150, 255, 0.5), transparent 55%),
+    radial-gradient(ellipse 60% 60% at 60% 100%, rgba(130, 200, 255, 0.45), transparent 60%),
+    linear-gradient(135deg, #f3eef7, #eaf1f8);
+
+  /* Glass tokens · 真实启用 */
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-blur: 30px;
 
   /* ── Fonts ── */
   --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Consolas, monospace;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: "Instrument Serif", "Newsreader", Georgia, serif;
+  /* --font-display is now an alias of --font-sans — no separate serif face.
+     Kept as a token so any old references still resolve, just to the
+     same Inter stack. */
+  --font-display: var(--font-sans);
 }
 
 @layer base {
   :root {
     color-scheme: light;
-    --code-bg: #f6f6f3;
+    --code-bg: #f4f4f8;
   }
   :root.dark {
     color-scheme: dark;
     /* ═══════════════════════════════════════════════════════
-       DARK MODE · "Matte Night"
-       Warm amber on deep matte black (Anthropic / Cursor lineage).
-       No more navy. No more vibrancy translucency. Solid surface.
+       DARK MODE · borrowed from Mantle
+       Deep purple-blue wallpaper + dark glass panels.
        ═══════════════════════════════════════════════════════ */
-    --color-bg: #0F0E0C;             /* 哑光黑 · 带 1% 暖调，不冷 */
-    --color-bg-soft: #18160F;        /* 侧栏 · hover */
-    --color-bg-muted: #1F1C13;       /* 选中 · code chip */
-    --color-border: #2A2519;
-    --color-border-strong: #3F3727;
+    --color-bg: #15131c;             /* editor surface · 接近 Mantle wallpaper 底 */
+    --color-bg-soft: rgba(50, 50, 64, 0.45);
+    --color-bg-muted: rgba(60, 60, 76, 0.55);
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-border-strong: rgba(255, 255, 255, 0.2);
 
-    --color-text: #F0EBE0;           /* 暖白墨色 */
-    --color-text-muted: #BBB098;     /* meta */
-    --color-text-subtle: #6F6852;    /* tertiary */
-    --color-text-faint: #4A4533;     /* 极弱 */
+    --color-text: #f2f2f7;
+    --color-text-muted: #b0b0be;
+    --color-text-subtle: #83838f;
+    --color-text-faint: #5a5a66;
 
-    --color-bg-chrome: #18160F;      /* 同 bg-soft · 实色 */
-    --chrome-bg-soft: var(--color-bg-soft);
-    --chrome-bg-muted: var(--color-bg-muted);
+    --color-bg-chrome: rgba(20, 20, 28, 0.4);   /* glass chrome */
+    --chrome-bg-soft: rgba(255, 255, 255, 0.07);
+    --chrome-bg-muted: rgba(255, 255, 255, 0.1);
     --chrome-border: var(--color-border);
     --chrome-text: var(--color-text);
     --chrome-text-muted: var(--color-text-muted);
     --chrome-text-subtle: var(--color-text-subtle);
     --chrome-accent: var(--color-accent);
 
-    /* ── 单 accent · warm amber (暗色版 burnt sienna) ── */
-    --color-accent:   #F97316;
-    --color-accent-2: #F97316;
-    --color-accent-3: #F97316;       /* 单 accent 原则 */
-    --color-accent-soft: rgba(249, 115, 22, 0.14);
-    --color-accent-glow: rgba(249, 115, 22, 0.36);
-    --color-danger:   #F87171;
-    --color-success:  #4ADE80;
-    --color-warning:  #FBBF24;
+    /* ── 单 accent · Apple blue (跨 light/dark 一致) ── */
+    --color-accent:   #0a84ff;
+    --color-accent-2: #0a84ff;
+    --color-accent-3: #0a84ff;
+    --color-accent-soft: rgba(10, 132, 255, 0.18);
+    --color-accent-glow: rgba(10, 132, 255, 0.45);
+    --color-danger:   #ff453a;
+    --color-success:  #32d74b;
+    --color-warning:  #ff9f0a;
 
     /* markdown editorial colors */
     --md-violet: #C4B5FD;
-    --md-amber:  #FBBF24;
+    --md-amber:  #ff9f0a;
     --md-rose:   #F472B6;
     --md-teal:   #5EEAD4;
     --md-amber-soft: #2a2118;
     --md-rose-soft:  #2a1a22;
-    --code-bg: #1F1C13;              /* 跟 bg-muted 同 · 实色 */
+    --code-bg: rgba(255, 255, 255, 0.05);
 
-    /* Glass tokens — 实色模式下基本仅做兼容，弱化模糊 */
-    --glass-bg: linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
-    --glass-border: rgba(255, 255, 255, 0.06);
-    --glass-blur: 0px;
+    /* Wallpaper · 深蓝紫粉 (Mantle dark) */
+    --wallpaper:
+      radial-gradient(ellipse 50% 60% at 8% 0%, rgba(120, 60, 180, 0.55), transparent 55%),
+      radial-gradient(ellipse 55% 55% at 95% 8%, rgba(20, 90, 200, 0.5), transparent 55%),
+      radial-gradient(ellipse 60% 60% at 60% 100%, rgba(180, 60, 120, 0.4), transparent 60%),
+      linear-gradient(135deg, #15131c, #0e1422);
+
+    /* Glass tokens · 启用 */
+    --glass-bg: rgba(50, 50, 64, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-blur: 30px;
   }
   :root:not(.dark) {
-    --code-bg: #F2EBDC;              /* 跟 bg-soft 同 */
+    --code-bg: #f4f4f8;              /* cool 浅灰 · 接近 Mantle */
   }
   html, body, #root {
     height: 100%;
@@ -122,7 +140,8 @@
     overflow: hidden;
   }
   body {
-    background: var(--color-bg);
+    background: var(--wallpaper);
+    background-attachment: fixed;
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -131,30 +150,7 @@
     font-feature-settings: "cv11" 1, "ss01" 1;
     position: relative;
   }
-  /* ─── Editorial ambient ──────────────────────────────────────
-     Light: 几乎无形的纸面颗粒纹理 (SVG noise 3.5% 透明)
-     Dark : 暖橙 aurora 角落光晕 (从 navy/紫 改为 burnt sienna 系)
-     —— 任何时候不再有 NSVisualEffectView 玻璃漏出 */
-  :root:not(.dark) body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.5'/></svg>");
-    opacity: 0.035;
-    mix-blend-mode: multiply;
-    pointer-events: none;
-    z-index: 0;
-  }
-  :root.dark body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 50% at 90% -5%, rgba(249, 115, 22, 0.10), transparent 55%),
-      radial-gradient(ellipse 50% 40% at -5% 100%, rgba(249, 115, 22, 0.06), transparent 55%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  /* 老的 ambient grain/aurora 层移除 —— Mantle 风格里 wallpaper 自己就是 ambient */
   #root {
     position: relative;
     z-index: 1;
@@ -198,25 +194,25 @@
 }
 
 /* ============================================================
-   Window chrome — glass surfaces over the ambient navy gradient.
+   Window chrome — glass panels over the pastel wallpaper.
+   Topbar / statusbar / sidebars: backdrop-filter blur 30px.
+   Editor surface (.app-panel) stays opaque white for typing comfort.
    ============================================================ */
 .app-chrome {
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
 }
-/* Editorial Modernist · 实色 chrome
-   舍弃 NSVisualEffectView 玻璃 / backdrop-filter blur，
-   全部用实色 + 1px hairline border 做层级。
-   暗模式仍用 ambient aurora 给暖度，但 chrome 自身不透明。 */
 .app-topbar {
   background: var(--color-bg-chrome);
   color: var(--chrome-text);
   position: relative;
   border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
 }
-.app-topbar::after { display: none; }    /* 去掉旧 accent 渐变光线 */
+.app-topbar::after { display: none; }
 .app-panel {
-  background: var(--color-bg);
+  background: var(--color-bg);     /* solid editor surface */
 }
 .app-statusbar {
   background: var(--color-bg-chrome);
@@ -225,15 +221,21 @@
   font-feature-settings: "tnum" on, "cv11" 1;
   position: relative;
   border-top: 1px solid var(--color-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
 }
-/* 侧栏 · 实色 chrome */
+/* 侧栏 · glass */
 .chrome-fade-left {
   background: var(--color-bg-chrome) !important;
   border-right: 1px solid var(--color-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
 }
 .chrome-fade-right {
   background: var(--color-bg-chrome) !important;
   border-left: 1px solid var(--color-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
 }
 /* glow line at top of statusbar — light mode only (dark uses glass border) */
 :root:not(.dark) .app-statusbar::before {
@@ -1027,63 +1029,65 @@
   background: color-mix(in oklab, var(--color-accent) 22%, transparent);
 }
 
-/* ─── Headings · Editorial Modernist ────────────────────────────────
-   H1/H2 use Instrument Serif italic in a light weight — the printed-
-   page aesthetic. H3-H6 stay sans for clear hierarchy at small sizes.
-   No left rails — italic + size is the hierarchy. */
+/* ─── Headings · Tool typography ──────────────────────────────────
+   Inter sans throughout. Bold weights + tight letter-spacing carry
+   the hierarchy. No italic display face — restrained, utilitarian.
+   Scale borrowed from Mantle / Linear. */
 .milkdown .ProseMirror h1,
 .milkdown .ProseMirror h2,
 .milkdown .ProseMirror h3,
 .milkdown .ProseMirror h4,
 .milkdown .ProseMirror h5,
 .milkdown .ProseMirror h6 {
+  font-family: var(--font-sans);
   color: var(--color-text);
   scroll-margin-top: 16px;
   position: relative;
+  font-feature-settings: "ss01", "cv11";   /* Inter alt forms */
 }
 
 .milkdown .ProseMirror h1 {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 2.5rem;          /* 40px */
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  margin: 1.6rem 0 0.9rem;
+  font-weight: 700;
+  font-size: 1.75rem;         /* 28px */
+  line-height: 1.2;
+  letter-spacing: -0.022em;
+  margin: 1.4rem 0 0.7rem;
 }
 .milkdown .ProseMirror h1:first-child { margin-top: 0.2rem; }
 
 .milkdown .ProseMirror h2 {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.875rem;        /* 30px */
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-  margin: 1.8rem 0 0.7rem;
+  font-weight: 700;
+  font-size: 1.375rem;        /* 22px */
+  line-height: 1.25;
+  letter-spacing: -0.018em;
+  margin: 1.5rem 0 0.55rem;
 }
 
 .milkdown .ProseMirror h3 {
-  font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 1.15rem;         /* 18.4px */
+  font-size: 1.0625rem;       /* 17px */
   line-height: 1.35;
-  letter-spacing: -0.005em;
-  margin: 1.4rem 0 0.5rem;
+  letter-spacing: -0.01em;
+  margin: 1.2rem 0 0.45rem;
 }
 
-.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h4 {
+  font-weight: 600;
+  font-size: 0.9375rem;       /* 15px */
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  margin: 1.05rem 0 0.4rem;
+}
+
 .milkdown .ProseMirror h5,
 .milkdown .ProseMirror h6 {
-  font-family: var(--font-sans);
   font-weight: 600;
-  letter-spacing: 0;
-  margin: 1.1rem 0 0.4rem;
+  text-transform: uppercase;
   color: var(--color-text-subtle);
+  margin: 1rem 0 0.35rem;
 }
-.milkdown .ProseMirror h4 { font-size: 1rem; }
-.milkdown .ProseMirror h5 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; }
-.milkdown .ProseMirror h6 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-text-faint); }
+.milkdown .ProseMirror h5 { font-size: 0.6875rem; letter-spacing: 0.12em; }
+.milkdown .ProseMirror h6 { font-size: 0.625rem;  letter-spacing: 0.14em; color: var(--color-text-faint); }
 
 .milkdown .ProseMirror h4 {
   font-size: 1rem;
@@ -2392,49 +2396,12 @@ input:focus, textarea:focus {
 }
 
 /* ============================================================
-   Editorial Modernist · Drop cap + Reading spine
-   Two signature moves from the v7 design language:
-
-   1. Drop cap — first paragraph after the doc header opens with a
-      large italic Instrument Serif initial in burnt sienna.
-   2. Reading spine — thin right-edge progress bar driven by the
-      `--reading-progress` CSS variable that MarkdownEditor updates
-      on scroll. Fixed inside the scroller via position: sticky so
-      the spine stays visible while content scrolls.
+   Reading spine — thin right-edge scroll-progress indicator driven
+   by the `--reading-progress` CSS variable that MarkdownEditor
+   updates on scroll. Fixed inside the scroller via position: sticky
+   so the spine stays visible while content scrolls.
+   (Drop cap was removed — too artistic for a tool.)
    ============================================================ */
-
-/* Drop cap · only when the first node is a normal paragraph (so we
-   don't drop-cap headings). Skips when the doc starts with H1/H2/H3
-   because :first-of-type targets the first <p>, not the first child;
-   the `~ h1` sibling guard isn't possible in CSS, so we rely on
-   ProseMirror's behavior: most docs lead with a paragraph. */
-.milkdown .ProseMirror > p:first-of-type:not(:has(img)):first-letter {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 4.2em;
-  line-height: 0.82;
-  float: left;
-  margin: 0.08em 0.08em -0.05em 0;
-  padding-right: 0.04em;
-  color: var(--color-accent);
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Hide the drop cap whenever the first node is actually a heading —
-   :has() is widely supported in WKWebView 16.4+ which Tauri uses. */
-.milkdown .ProseMirror:has(> h1:first-child, > h2:first-child, > h3:first-child)
-  > p:first-of-type:first-letter {
-  font-family: inherit;
-  font-style: inherit;
-  font-weight: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  float: none;
-  margin: 0;
-  padding: 0;
-  color: inherit;
-}
 
 /* Reading spine · 2px laser strip on the right edge of the scroller.
    The bar is solid below `--reading-progress` and faint above, giving
@@ -2469,39 +2436,37 @@ input:focus, textarea:focus {
 .focus-mode .md-reading-spine { opacity: 0.35; }
 
 /* ============================================================
-   Editorial Modernist · Tufte sidenotes
-   Syntax: `text ^[a sidenote in the right margin] more text`
+   Margin sidenotes · `text ^[note] more` syntax.
    Wired by src/utils/milkdown-sidenote.ts — adds decorations:
-   .mf-sidenote-bracket  → opening `^[` and closing `]` (hidden)
-   .mf-sidenote          → inner note text (styled below)
+     .mf-sidenote-bracket  → opening `^[` and closing `]` (hidden)
+     .mf-sidenote          → inner note text (styled below)
+   Sans throughout. No serif, no italic — restrained tool aesthetic.
    ============================================================ */
 
-/* Hide the `^[` and `]` brackets — they're authoring scaffolding */
+/* Hide the `^[` and `]` brackets — authoring scaffolding only */
 .mf-sidenote-bracket {
-  /* keep them clickable for cursor placement, but invisible */
   font-size: 0;
   opacity: 0;
 }
 
-/* Inline fallback · narrow screens get an italic-serif aside on the line */
+/* Inline fallback · narrow screens get a quiet sans aside on the line */
 .mf-sidenote {
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 0.85em;
-  line-height: 1.35;
+  font-size: 0.82em;
+  line-height: 1.4;
   color: var(--color-text-subtle);
   background: color-mix(in oklab, var(--color-accent) 5%, transparent);
-  padding: 0 0.4em;
-  margin: 0 0.15em;
-  border-radius: 3px;
-  border-left: 2px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
+  padding: 0 0.45em;
+  margin: 0 0.2em;
+  border-radius: 4px;
+  border-left: 2px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
 }
 
-/* Wide screens · float into the right margin Tufte-style. We use a
-   negative-right offset so the note sits past the doc's right padding
-   without expanding the paragraph's box. The parent paragraph needs
-   `position: relative` for this to anchor correctly. */
+/* Wide screens · float into the right margin Tufte-style. Negative-right
+   offset keeps the note past the doc's right padding without expanding
+   the paragraph's box. Parent paragraph needs `position: relative` for
+   anchoring. */
 @media (min-width: 1100px) {
   .milkdown .ProseMirror p,
   .milkdown .ProseMirror li,
@@ -2514,11 +2479,10 @@ input:focus, textarea:focus {
     width: 200px;
     max-width: 18vw;
     background: transparent;
-    border-left: 1px solid color-mix(in oklab, var(--color-accent) 70%, transparent);
+    border-left: 1px solid color-mix(in oklab, var(--color-accent) 60%, transparent);
     padding: 0 0 0 0.65em;
     margin: 0;
     border-radius: 0;
-    /* hover lifts color slightly */
     transition: color 180ms ease;
   }
   .mf-sidenote:hover { color: var(--color-text); }

@@ -689,48 +689,52 @@ function App() {
         )}
       </div>
 
-      {/* Editorial breadcrumb · thin italic-serif strip showing the path
-          of the active file. Hidden when nothing's open. */}
+      {/* Breadcrumb · thin sans strip showing path of the active file.
+          Mantle-style: 12.5px Inter, current segment weight 500, others
+          muted. Hidden when nothing's open. */}
       {breadcrumb && (
         <div
           className="shrink-0 flex items-center px-6 h-6 select-none"
           style={{
             background: "var(--color-bg-chrome)",
             borderBottom: "1px solid var(--color-border)",
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
+            backdropFilter: "blur(var(--glass-blur)) saturate(1.5)",
+            WebkitBackdropFilter: "blur(var(--glass-blur)) saturate(1.5)",
+            fontFamily: "var(--font-sans)",
             fontWeight: 400,
-            fontSize: "13px",
+            fontSize: "12.5px",
             color: "var(--color-text-subtle)",
             lineHeight: 1,
-            letterSpacing: "-0.005em",
+            letterSpacing: "-0.003em",
           }}
         >
-          <span style={{ color: "var(--color-text)" }}>{breadcrumb.rootName}</span>
-          {breadcrumb.parts.map((p, i) => (
-            <span key={i} className="flex items-center">
-              <span
-                aria-hidden
-                style={{
-                  margin: "0 0.55em",
-                  fontStyle: "normal",
-                  color: "var(--color-text-faint)",
-                  fontSize: "11px",
-                }}
-              >
-                ›
+          <span style={{ color: "var(--color-text-muted)" }}>{breadcrumb.rootName}</span>
+          {breadcrumb.parts.map((p, i) => {
+            const isLast = i === breadcrumb.parts.length - 1;
+            return (
+              <span key={i} className="flex items-center">
+                <span
+                  aria-hidden
+                  style={{
+                    margin: "0 0.5em",
+                    color: "var(--color-text-faint)",
+                    fontSize: "11px",
+                  }}
+                >
+                  ›
+                </span>
+                <span
+                  style={
+                    isLast
+                      ? { color: "var(--color-text)", fontWeight: 500 }
+                      : undefined
+                  }
+                >
+                  {p}
+                </span>
               </span>
-              <span
-                style={
-                  i === breadcrumb.parts.length - 1
-                    ? { color: "var(--color-accent)" }
-                    : undefined
-                }
-              >
-                {p}
-              </span>
-            </span>
-          ))}
+            );
+          })}
         </div>
       )}
 

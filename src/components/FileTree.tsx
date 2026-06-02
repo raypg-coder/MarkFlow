@@ -307,13 +307,13 @@ function WorkspaceSection({ rootPath }: { rootPath: string }) {
         <span
           className="truncate flex-1"
           style={{
-            fontFamily: "var(--font-display)",
-            fontStyle: "italic",
-            fontWeight: 400,
-            fontSize: "16px",
-            letterSpacing: "-0.005em",
-            color: "var(--color-text)",
-            lineHeight: 1.2,
+            fontFamily: "var(--font-sans)",
+            fontWeight: 600,
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.13em",
+            color: "var(--color-text-subtle)",
+            lineHeight: 1,
           }}
         >
           {displayName}
