@@ -16,6 +16,8 @@ import {
   Brain,
   Sparkles,
   Target,
+  Eye,
+  Pencil,
 } from "lucide-react";
 import type { RightSidebarView } from "./types";
 import { useStore } from "./store";
@@ -73,6 +75,12 @@ function App() {
       `${useStore.getState().editorFontSize}px`,
     );
   }, []);
+
+  // Toggle global read-mode class so CSS can hide Crepe chrome
+  const editorMode = useStore((s) => s.editorMode);
+  useEffect(() => {
+    document.documentElement.classList.toggle("read-mode", editorMode === "read");
+  }, [editorMode]);
 
   useEffect(() => {
     useStore.getState().restoreTrees();
@@ -312,6 +320,11 @@ function App() {
         e.preventDefault();
         useStore.getState().resetEditorFontSize();
       }
+      // Cmd+E — toggle read/edit mode
+      if (mod && !e.shiftKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        useStore.getState().toggleEditorMode();
+      }
       if (mod && e.key === "\\") {
         e.preventDefault();
         toggleSidebar();
@@ -529,6 +542,23 @@ function App() {
           </div>
 
           <div className="flex items-center self-stretch gap-0.5 px-2">
+            {activeFile?.kind === "markdown" && (
+              <button
+                onClick={() => useStore.getState().toggleEditorMode()}
+                title={editorMode === "read" ? "切到编辑 (⌘E)" : "切到阅读 (⌘E)"}
+                className={`p-1.5 rounded-md ${
+                  editorMode === "read"
+                    ? "text-[var(--chrome-accent)] bg-[var(--chrome-bg-soft)]"
+                    : "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
+                }`}
+              >
+                {editorMode === "read" ? (
+                  <Pencil size={14} strokeWidth={1.75} />
+                ) : (
+                  <Eye size={14} strokeWidth={1.75} />
+                )}
+              </button>
+            )}
             <button
               onClick={() => {
                 window.dispatchEvent(new Event("markflow:flush-editor"));

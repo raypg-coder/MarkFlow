@@ -1527,6 +1527,43 @@
   margin-bottom: 0;
 }
 
+/* ─── Read mode — hide all Crepe editing chrome ─────────────────
+   When :root.read-mode is set (toggled by Cmd+E or topbar button),
+   block handles, slash menus, toolbars, and link-edit popovers are
+   suppressed so the editor reads as a clean rendered document.
+   The underlying ProseMirror is also set to editable=false from React
+   so the caret/selection menu won't appear either. */
+:root.read-mode milkdown-block-handle,
+:root.read-mode milkdown-slash-menu,
+:root.read-mode milkdown-toolbar,
+:root.read-mode milkdown-link-edit,
+:root.read-mode milkdown-link-preview,
+:root.read-mode milkdown-table-tooltip,
+:root.read-mode milkdown-image-block-menu,
+:root.read-mode .milkdown-block-handle,
+:root.read-mode .milkdown-slash-menu,
+:root.read-mode .milkdown-toolbar,
+:root.read-mode .milkdown-link-edit,
+:root.read-mode .selection-menu {
+  display: none !important;
+}
+/* In read mode the caret should disappear and selection still works for copy */
+:root.read-mode .milkdown .ProseMirror {
+  caret-color: transparent;
+  cursor: default;
+}
+/* Code block view-toggle ([src][img]) only useful while editing */
+:root.read-mode .milkdown .milkdown-code-block .mf-embed-toggle {
+  display: none;
+}
+/* Force code blocks into preview mode in read mode (mermaid/svg only) */
+:root.read-mode .milkdown .milkdown-code-block[data-mf-has-embed] .cm-editor {
+  display: none;
+}
+:root.read-mode .milkdown .milkdown-code-block[data-mf-has-embed] > .mf-embed {
+  display: block !important;
+}
+
 /* ─── In-document find (Cmd+F) highlights via CSS Custom Highlight API ── */
 ::highlight(mf-find) {
   background-color: color-mix(in oklab, var(--color-accent) 30%, transparent);

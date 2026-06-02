@@ -68,6 +68,7 @@ interface State {
   quickOpenVisible: boolean;            // Cmd+P file switcher modal
   editorFontSize: number;               // markdown editor body font px (zoomable)
   findOpen: boolean;                     // in-document find bar (Cmd+F)
+  editorMode: "edit" | "read";          // Cmd+E toggles between WYSIWYG edit and read-only
 
   addFolder: () => Promise<void>;
   removeFolder: (rootPath: string) => void;
@@ -90,6 +91,8 @@ interface State {
   bumpEditorFontSize: (delta: number) => void;
   resetEditorFontSize: () => void;
   setFindOpen: (v: boolean) => void;
+  setEditorMode: (m: "edit" | "read") => void;
+  toggleEditorMode: () => void;
   createWorkspace: (name: string) => Promise<void>;
   switchWorkspace: (id: string) => Promise<void>;
   renameWorkspace: (id: string, name: string) => void;
@@ -342,6 +345,7 @@ export const useStore = create<State>((set, get) => ({
   externalChangedPaths: [],
   editorFontSize: loadFontSize(),
   findOpen: false,
+  editorMode: (localStorage.getItem("editorMode:v1") as "edit" | "read") || "edit",
   ...(() => {
     const { workspaces, activeId } = loadWorkspaces();
     return { workspaces, activeWorkspaceId: activeId };
@@ -525,6 +529,16 @@ export const useStore = create<State>((set, get) => ({
     set({ editorFontSize: FONT_SIZE_DEFAULT });
   },
   setFindOpen: (v) => set({ findOpen: v }),
+
+  setEditorMode: (m) => {
+    localStorage.setItem("editorMode:v1", m);
+    set({ editorMode: m });
+  },
+  toggleEditorMode: () => {
+    const next = get().editorMode === "edit" ? "read" : "edit";
+    localStorage.setItem("editorMode:v1", next);
+    set({ editorMode: next });
+  },
 
   // ─── Workspaces ─────────────────────────────────────────────
   createWorkspace: async (name) => {

@@ -82,6 +82,9 @@ function readingTime(words: number): string {
 }
 
 export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, theme }: Props) {
+  // Subscribe to editorMode so this component re-renders + toggles
+  // ProseMirror editable when user switches read/edit.
+  const editorMode = useStore((s) => s.editorMode);
   const containerRef = useRef<HTMLDivElement>(null);
   const editorMountRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
@@ -123,6 +126,25 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
     el.addEventListener("mousedown", onClick, true);
     return () => el.removeEventListener("mousedown", onClick, true);
   }, []);
+
+  // Read/edit mode — toggle ProseMirror editable so clicks don't enter
+  // contenteditable behavior, slash menu doesn't open, etc. Block handles
+  // and other Crepe chrome are hidden via CSS class on .milkdown.
+  useEffect(() => {
+    const crepe = crepeRef.current;
+    if (!crepe) return;
+    try {
+      crepe.editor.action((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        const editable = editorMode === "edit";
+        view.setProps({ editable: () => editable });
+        // Force a re-render so contenteditable attribute updates immediately
+        view.updateState(view.state);
+      });
+    } catch (err) {
+      console.warn("[MarkdownEditor] toggle editable failed", err);
+    }
+  }, [editorMode]);
 
   // Listen for external insert events (e.g. AI panel "插入到光标")
   useEffect(() => {
@@ -393,7 +415,7 @@ export function MarkdownEditor({ value, onChange, filePath, fileName, dirty, the
       </div>
       {!fallback && (
         <>
-          <SelectionMenu containerRef={editorMountRef} />
+          {editorMode === "edit" && <SelectionMenu containerRef={editorMountRef} />}
           <AmbientLight containerRef={editorMountRef} />
         </>
       )}
