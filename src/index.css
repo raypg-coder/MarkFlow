@@ -1106,6 +1106,12 @@
 .milkdown.milkdown .ProseMirror li,
 .milkdown.milkdown .ProseMirror blockquote {
   font-size: var(--editor-font-size, 15px);
+  line-height: 1.45;         /* was Crepe's 24px (≈1.6) — tightened, matches body */
+}
+/* Crepe pads every <p> 4px top+bottom which inflates line/paragraph
+   spacing; zero it and let margin alone control paragraph gaps. */
+.milkdown.milkdown .ProseMirror p {
+  padding: 0;
 }
 .milkdown.milkdown .ProseMirror h1 { font-size: 1.85em; }
 .milkdown.milkdown .ProseMirror h2 { font-size: 1.45em; }
@@ -1116,7 +1122,7 @@
 
 /* ─── Body ───────────────────────────────────────────────────── */
 .milkdown .ProseMirror p {
-  margin: 0.4em 0;
+  margin: 0.55em 0;          /* paragraph gap (padding now zeroed) */
 }
 .milkdown .ProseMirror strong {
   font-weight: 700;
