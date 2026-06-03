@@ -156,9 +156,9 @@ JSON
   echo "    3. $SIG_FILE     (auto-update 验签用)"
   echo "    4. $LATEST_JSON  (manifest, 客户端从此处拉)"
   echo ""
-  echo " 一键传:"
-  echo "   gh release create $TAG \"$DMG\" \"$TARGZ\" \"$SIG_FILE\" \"$LATEST_JSON\" \\"
-  echo "     --repo raypg-coder/MarkFlow --title \"MarkFlow $TAG\" --notes \"...\""
+  echo " 一键发布 (自动切 gh 账号 + 上传):"
+  echo "   bash scripts/publish-release.sh"
+  echo "   # 自定义标题/notes: bash scripts/publish-release.sh \"标题\" /tmp/notes.md"
   echo "────────────────────────────────────────────────"
 else
   echo ""
