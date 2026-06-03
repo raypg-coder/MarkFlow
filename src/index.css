@@ -1046,37 +1046,41 @@
   font-feature-settings: "ss01", "cv11";   /* Inter alt forms */
 }
 
+/* NOTE: heading font-size + margin use `em` (relative to editor body font)
+   NOT `rem` — so they scale together with the global font-size control
+   (--editor-font-size on .ProseMirror). rem would anchor to root and stay
+   fixed while only paragraphs grew. */
 .milkdown .ProseMirror h1 {
   font-weight: 700;
-  font-size: 1.75rem;         /* 28px */
+  font-size: 1.85em;          /* ≈28px @15 */
   line-height: 1.2;
   letter-spacing: -0.022em;
-  margin: 1.4rem 0 0.7rem;
+  margin: 0.85em 0 0.4em;
 }
-.milkdown .ProseMirror h1:first-child { margin-top: 0.2rem; }
+.milkdown .ProseMirror h1:first-child { margin-top: 0.15em; }
 
 .milkdown .ProseMirror h2 {
   font-weight: 700;
-  font-size: 1.375rem;        /* 22px */
+  font-size: 1.45em;          /* ≈22px @15 */
   line-height: 1.25;
   letter-spacing: -0.018em;
-  margin: 1.5rem 0 0.55rem;
+  margin: 1.05em 0 0.38em;
 }
 
 .milkdown .ProseMirror h3 {
   font-weight: 600;
-  font-size: 1.0625rem;       /* 17px */
+  font-size: 1.13em;          /* ≈17px @15 */
   line-height: 1.35;
   letter-spacing: -0.01em;
-  margin: 1.2rem 0 0.45rem;
+  margin: 1.1em 0 0.4em;
 }
 
 .milkdown .ProseMirror h4 {
   font-weight: 600;
-  font-size: 0.9375rem;       /* 15px */
+  font-size: 1em;             /* ≈15px @15 */
   line-height: 1.35;
   letter-spacing: -0.005em;
-  margin: 1.05rem 0 0.4rem;
+  margin: 1.1em 0 0.4em;
 }
 
 .milkdown .ProseMirror h5,
@@ -1084,35 +1088,35 @@
   font-weight: 600;
   text-transform: uppercase;
   color: var(--color-text-subtle);
-  margin: 1rem 0 0.35rem;
+  margin: 1.3em 0 0.4em;
 }
-.milkdown .ProseMirror h5 { font-size: 0.6875rem; letter-spacing: 0.12em; }
-.milkdown .ProseMirror h6 { font-size: 0.625rem;  letter-spacing: 0.14em; color: var(--color-text-faint); }
+.milkdown .ProseMirror h5 { font-size: 0.73em; letter-spacing: 0.12em; }
+.milkdown .ProseMirror h6 { font-size: 0.67em;  letter-spacing: 0.14em; color: var(--color-text-faint); }
 
-.milkdown .ProseMirror h4 {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 1.1rem 0 0.5rem;
+/* ─── Font-size control · beat Crepe's reset.css ──────────────────
+   Crepe's reset.css hard-codes `.milkdown .ProseMirror p { font-size:16px }`
+   and h1=42px … h6=18px. Those are the SAME specificity (0,2,1) as our
+   rules but load LATER in the bundle, so Crepe wins and the global
+   font-size control (--editor-font-size) never takes effect.
+   Fix: bump specificity to (0,3,1) with the doubled `.milkdown.milkdown`
+   class (same element matches both) — now we win regardless of order.
+   Body + list items track the var directly; headings use em so they
+   scale proportionally. */
+.milkdown.milkdown .ProseMirror p,
+.milkdown.milkdown .ProseMirror li,
+.milkdown.milkdown .ProseMirror blockquote {
+  font-size: var(--editor-font-size, 15px);
 }
-.milkdown .ProseMirror h5 {
-  font-size: 0.94rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  margin: 1rem 0 0.45rem;
-}
-.milkdown .ProseMirror h6 {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0.9rem 0 0.4rem;
-  font-family: var(--font-mono);
-}
+.milkdown.milkdown .ProseMirror h1 { font-size: 1.85em; }
+.milkdown.milkdown .ProseMirror h2 { font-size: 1.45em; }
+.milkdown.milkdown .ProseMirror h3 { font-size: 1.13em; }
+.milkdown.milkdown .ProseMirror h4 { font-size: 1em; }
+.milkdown.milkdown .ProseMirror h5 { font-size: 0.73em; }
+.milkdown.milkdown .ProseMirror h6 { font-size: 0.67em; }
 
 /* ─── Body ───────────────────────────────────────────────────── */
 .milkdown .ProseMirror p {
-  margin: 0.4rem 0;
+  margin: 0.4em 0;
 }
 .milkdown .ProseMirror strong {
   font-weight: 700;
@@ -1162,9 +1166,9 @@
   border-radius: 10px;
   overflow-x: auto;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 0.86em;          /* em → scales with global font-size */
   line-height: 1.65;
-  margin: 1.1rem 0;
+  margin: 1.1em 0;
   font-feature-settings: "calt" 1;
   tab-size: 2;
   -moz-tab-size: 2;
@@ -2147,7 +2151,7 @@ milkdown-toolbar button.active,
   font-size: 12px;
 }
 .md-fallback-content {
-  font-size: 15.5px;
+  font-size: var(--editor-font-size, 15px);
   line-height: 1.65;
   color: var(--color-text);
 }
