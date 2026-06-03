@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Clock, X, Target } from "lucide-react";
+import { Plus, Trash2, Clock, X, Target, Search } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -42,6 +42,7 @@ export function MissionBoard() {
   } = useStore();
 
   const [hideDone, setHideDone] = useState(false);
+  const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -53,14 +54,16 @@ export function MissionBoard() {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
 
   // Group missions into lanes, preserving the flat-array order
+  const q = query.trim().toLowerCase();
   const lanes = useMemo(() => {
     const g: Record<MissionPriority, Mission[]> = { critical: [], high: [], mid: [], low: [] };
     for (const m of missions) {
       if (hideDone && m.completed) continue;
+      if (q && !m.title.toLowerCase().includes(q)) continue;
       g[m.priority].push(m);
     }
     return g;
-  }, [missions, hideDone]);
+  }, [missions, hideDone, q]);
 
   const activeMission = activeId ? missions.find((m) => m.id === activeId) ?? null : null;
 
@@ -97,6 +100,20 @@ export function MissionBoard() {
           <span className="mission-board-count">{done} / {total}</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          <div className="mission-board-search">
+            <Search size={13} strokeWidth={1.75} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索任务…"
+              spellCheck={false}
+            />
+            {query && (
+              <button onClick={() => setQuery("")} title="清除" className="mission-board-search-x">
+                <X size={12} strokeWidth={2} />
+              </button>
+            )}
+          </div>
           <div className="mission-board-progress">
             <div className="mission-board-progress-fill" style={{ width: `${pct}%` }} />
           </div>
@@ -118,7 +135,11 @@ export function MissionBoard() {
         </div>
       </div>
 
-      {/* Columns */}
+      {/* Empty state — no tasks at all */}
+      {total === 0 ? (
+        <BoardEmpty onAdd={(t) => addMission(t, "mid")} />
+      ) : (
+      /* Columns */
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -143,6 +164,34 @@ export function MissionBoard() {
           {activeMission ? <CardBody mission={activeMission} overlay /> : null}
         </DragOverlay>
       </DndContext>
+      )}
+    </div>
+  );
+}
+
+function BoardEmpty({ onAdd }: { onAdd: (title: string) => void }) {
+  const [draft, setDraft] = useState("");
+  const submit = () => {
+    const t = draft.trim();
+    if (t) { onAdd(t); setDraft(""); }
+  };
+  return (
+    <div className="mission-empty">
+      <span className="mission-empty-icon"><Target size={26} strokeWidth={1.5} /></span>
+      <div className="mission-empty-title">还没有任务</div>
+      <div className="mission-empty-sub">在下面输入第一个任务，回车创建。之后可以拖到不同优先级泳道。</div>
+      <div className="mission-empty-add">
+        <Plus size={14} strokeWidth={2} />
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+          placeholder="新建任务…"
+          spellCheck={false}
+          autoFocus
+        />
+        {draft.trim() && <button onClick={submit} className="mission-empty-go">添加</button>}
+      </div>
     </div>
   );
 }
@@ -236,13 +285,18 @@ function SortableCard({
     id: mission.id,
   });
   const [editingDate, setEditingDate] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+
+  // While editing the title, drag listeners are detached so typing /
+  // text-selection don't start a drag.
+  const dragProps = editingTitle ? {} : listeners;
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
       {...attributes}
-      {...listeners}
+      {...dragProps}
       className="mission-bcard-wrap"
     >
       <CardBody
@@ -251,6 +305,8 @@ function SortableCard({
         onDelete={onDelete}
         editingDate={editingDate}
         setEditingDate={setEditingDate}
+        editingTitle={editingTitle}
+        setEditingTitle={setEditingTitle}
         onUpdate={onUpdate}
       />
     </div>
@@ -263,6 +319,8 @@ function CardBody({
   onDelete,
   editingDate,
   setEditingDate,
+  editingTitle,
+  setEditingTitle,
   onUpdate,
   overlay,
 }: {
@@ -271,10 +329,17 @@ function CardBody({
   onDelete?: () => void;
   editingDate?: boolean;
   setEditingDate?: (v: boolean) => void;
+  editingTitle?: boolean;
+  setEditingTitle?: (v: boolean) => void;
   onUpdate?: (patch: Partial<Mission>) => void;
   overlay?: boolean;
 }) {
   const stop = (e: React.MouseEvent | React.PointerEvent) => e.stopPropagation();
+  const commitTitle = (raw: string) => {
+    const t = raw.trim();
+    if (t && t !== mission.title) onUpdate?.({ title: t });
+    setEditingTitle?.(false);
+  };
   return (
     <div className={`mission-bcard group ${mission.completed ? "is-done" : ""} ${overlay ? "is-overlay" : ""}`}>
       <div className="flex items-start gap-2.5">
@@ -282,9 +347,27 @@ function CardBody({
           <RoundCheckbox checked={mission.completed} onClick={onToggle ?? (() => {})} />
         </span>
         <div className="flex-1 min-w-0">
-          <div className={`mission-bcard-title ${mission.completed ? "is-done" : ""}`}>
-            {mission.title}
-          </div>
+          {editingTitle ? (
+            <input
+              autoFocus
+              defaultValue={mission.title}
+              onPointerDown={stop}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitTitle((e.target as HTMLInputElement).value);
+                if (e.key === "Escape") setEditingTitle?.(false);
+              }}
+              onBlur={(e) => commitTitle(e.target.value)}
+              className="mission-bcard-edit"
+            />
+          ) : (
+            <div
+              className={`mission-bcard-title ${mission.completed ? "is-done" : ""}`}
+              onClick={overlay ? undefined : () => setEditingTitle?.(true)}
+              title={overlay ? undefined : "点击编辑"}
+            >
+              {mission.title}
+            </div>
+          )}
           <div className="flex items-center gap-2 mt-1.5" onPointerDown={stop}>
             {mission.deadline ? (
               <button onClick={() => setEditingDate?.(true)} className="hover:opacity-80 cursor-pointer" title="修改截止时间">
