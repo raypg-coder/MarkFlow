@@ -18,7 +18,7 @@ import { useStore } from "../store";
 import type { Mission, MissionPriority } from "../types";
 import { DatePicker } from "./DatePicker";
 
-const PRIORITY_LABELS: Record<MissionPriority, string> = {
+export const PRIORITY_LABELS: Record<MissionPriority, string> = {
   low: "Low",
   mid: "Mid",
   high: "High",
@@ -273,7 +273,7 @@ function MissionCard({
   );
 }
 
-function RoundCheckbox({ checked, onClick }: { checked: boolean; onClick: () => void }) {
+export function RoundCheckbox({ checked, onClick }: { checked: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -288,7 +288,7 @@ function RoundCheckbox({ checked, onClick }: { checked: boolean; onClick: () => 
   );
 }
 
-function CountdownClock({ deadline }: { deadline: number }) {
+export function CountdownClock({ deadline }: { deadline: number }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30000);  // 30s tick is enough for human-readable

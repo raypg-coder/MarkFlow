@@ -35,6 +35,7 @@ interface State {
   searching: boolean;
   sidebarView: "files" | "search" | "missions";
   sidebarOpen: boolean;
+  missionsFullView: boolean;            // center area shows the full Mission board
   missions: Mission[];
   lastObjectivesClearedAt: number | null;
   rightSidebarView: RightSidebarView;
@@ -118,10 +119,13 @@ interface State {
   setSearchQuery: (q: string) => void;
   runSearch: () => Promise<void>;
   setSidebarView: (v: "files" | "search" | "missions") => void;
+  setMissionsFullView: (v: boolean) => void;
   addMission: (title: string, priority?: MissionPriority, deadline?: number | null) => void;
   toggleMission: (id: string) => void;
   deleteMission: (id: string) => void;
   updateMission: (id: string, patch: Partial<Mission>) => void;
+  /** Board DnD: move a mission to a priority lane, optionally before another card. */
+  moveMissionToPriority: (id: string, newPriority: MissionPriority, beforeId: string | null) => void;
   clearObjectivesFlash: () => void;
   toggleSidebar: () => void;
   setRightSidebarView: (v: RightSidebarView) => void;
@@ -314,6 +318,7 @@ export const useStore = create<State>((set, get) => ({
   searching: false,
   sidebarView: (localStorage.getItem("sidebarView") as "files" | "search" | "missions") || "files",
   sidebarOpen: (localStorage.getItem("sidebarOpen") ?? "1") !== "0",
+  missionsFullView: localStorage.getItem("missionsFullView") === "1",
   missions: loadMissions(),
   lastObjectivesClearedAt: null,
   rightSidebarView: (localStorage.getItem("rightSidebarView") as RightSidebarView) || "outline",
@@ -451,6 +456,9 @@ export const useStore = create<State>((set, get) => ({
     set({ recentFiles: recents });
     persistRecentFiles(recents);
 
+    // Opening a file leaves the full Mission board and returns to the editor
+    if (get().missionsFullView) get().setMissionsFullView(false);
+
     const existing = get().openFiles.find((f) => f.path === path);
     if (existing) {
       get().setActive(path);
@@ -509,6 +517,27 @@ export const useStore = create<State>((set, get) => ({
     missions.splice(toIdx, 0, moved);
     set({ missions });
     persistMissions(missions);
+  },
+
+  moveMissionToPriority: (id, newPriority, beforeId) => {
+    const list = get().missions.slice();
+    const idx = list.findIndex((m) => m.id === id);
+    if (idx < 0) return;
+    const [m] = list.splice(idx, 1);
+    const moved = { ...m, priority: newPriority };
+    let insertAt: number;
+    if (beforeId) {
+      insertAt = list.findIndex((x) => x.id === beforeId);
+      if (insertAt < 0) insertAt = list.length;
+    } else {
+      // append to the end of the target priority group
+      let last = -1;
+      list.forEach((x, i) => { if (x.priority === newPriority) last = i; });
+      insertAt = last >= 0 ? last + 1 : list.length;
+    }
+    list.splice(insertAt, 0, moved);
+    set({ missions: list });
+    persistMissions(list);
   },
 
   setEditorFontSize: (px) => {
@@ -778,6 +807,8 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setActive: (path) => {
+    // Selecting a tab leaves the full Mission board and shows the editor
+    if (get().missionsFullView) get().setMissionsFullView(false);
     if (get().activePath === path) {
       set({ activePath: path });
       return;
@@ -927,6 +958,11 @@ export const useStore = create<State>((set, get) => ({
     set({ sidebarView: v, sidebarOpen: true });
     localStorage.setItem("sidebarOpen", "1");
     localStorage.setItem("sidebarView", v);
+  },
+
+  setMissionsFullView: (v) => {
+    set({ missionsFullView: v });
+    localStorage.setItem("missionsFullView", v ? "1" : "0");
   },
 
   addMission: (title, priority = "mid", deadline = null) => {

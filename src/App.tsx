@@ -22,7 +22,7 @@ import {
 import type { RightSidebarView } from "./types";
 import { useStore } from "./store";
 import { FileTree } from "./components/FileTree";
-import { MissionPanel } from "./components/MissionPanel";
+import { MissionBoard } from "./components/MissionBoard";
 import { TabBar } from "./components/TabBar";
 import { Editor } from "./components/Editor";
 import { SearchPanel } from "./components/SearchPanel";
@@ -54,6 +54,8 @@ function App() {
     setRightSidebarView,
     toggleRightSidebar,
     roots,
+    missionsFullView,
+    setMissionsFullView,
   } = useStore();
 
   const [sidebarWidth, setSidebarWidth] = useState(244);
@@ -449,6 +451,7 @@ function App() {
   const canForward = historyIndex < history.length - 1;
 
   const pickView = (v: "files" | "search" | "missions") => {
+    if (missionsFullView) setMissionsFullView(false);   // leave board → editor
     if (sidebarView === v && sidebarOpen) toggleSidebar();
     else setSidebarView(v);
   };
@@ -492,10 +495,10 @@ function App() {
                 <Search size={15} strokeWidth={1.75} />
               </button>
               <button
-                onClick={() => pickView("missions")}
-                title="missions"
+                onClick={() => setMissionsFullView(!missionsFullView)}
+                title="任务看板"
                 className={`p-1.5 rounded-md ${
-                  sidebarView === "missions"
+                  missionsFullView
                     ? "bg-[var(--chrome-bg-soft)] text-[var(--chrome-accent)]"
                     : "text-[var(--chrome-text-muted)] hover:bg-[var(--chrome-bg-soft)] hover:text-[var(--chrome-text)]"
                 }`}
@@ -639,7 +642,7 @@ function App() {
                 </>
               )}
             </div>
-            {!rightSidebarOpen && (
+            {!rightSidebarOpen && !missionsFullView && (
               <button
                 onClick={toggleRightSidebar}
                 title="展开右侧栏"
@@ -652,7 +655,7 @@ function App() {
         </div>
 
         {/* Right sidebar zone in top strip */}
-        {rightSidebarOpen && (
+        {rightSidebarOpen && !missionsFullView && (
           <div className="flex items-center shrink-0 self-stretch" style={{ width: rightSidebarWidth }}>
             <button
               onClick={toggleRightSidebar}
@@ -691,8 +694,8 @@ function App() {
 
       {/* Breadcrumb · thin sans strip showing path of the active file.
           Mantle-style: 12.5px Inter, current segment weight 500, others
-          muted. Hidden when nothing's open. */}
-      {breadcrumb && (
+          muted. Hidden when nothing's open or when the board is showing. */}
+      {breadcrumb && !missionsFullView && (
         <div
           className="shrink-0 flex items-center px-6 h-6 select-none"
           style={{
@@ -758,8 +761,6 @@ function App() {
           >
             {sidebarView === "search" ? (
               <SearchPanel />
-            ) : sidebarView === "missions" ? (
-              <MissionPanel />
             ) : (
               <FileTree />
             )}
@@ -775,15 +776,22 @@ function App() {
           />
         )}
 
-        {/* Editor column */}
-        <div className="flex-1 flex flex-col min-w-0 app-panel relative">
-          <FindBar />
-          <Editor />
-          <StatusBar />
-        </div>
+        {/* Center column — full Mission board, or the editor */}
+        {missionsFullView ? (
+          <div className="flex-1 flex flex-col min-w-0 relative">
+            <MissionBoard />
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col min-w-0 app-panel relative">
+            <FindBar />
+            <Editor />
+            <StatusBar />
+          </div>
+        )}
 
         {/* Right sidebar — collapsible with mechanical slide */}
-        {rightSidebarOpen && (
+        {/* Right sidebar — hidden in board mode so the board gets full width */}
+        {rightSidebarOpen && !missionsFullView && (
           <div
             className={`resize-handle w-px cursor-col-resize z-10 relative ${resizing === "right" ? "is-dragging" : ""}`}
             onMouseDown={() => {
@@ -792,21 +800,23 @@ function App() {
             }}
           />
         )}
-        <div
-          className="chrome-fade chrome-fade-right flex flex-col bg-[var(--color-bg-soft)] shrink-0 overflow-hidden transition-[width,opacity] duration-[260ms]"
-          style={{
-            width: rightSidebarOpen ? rightSidebarWidth : 0,
-            opacity: rightSidebarOpen ? 1 : 0,
-            transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-        >
+        {!missionsFullView && (
           <div
-            className="flex-1 min-h-0 flex flex-col"
-            style={{ width: rightSidebarWidth, minWidth: rightSidebarWidth }}
+            className="chrome-fade chrome-fade-right flex flex-col bg-[var(--color-bg-soft)] shrink-0 overflow-hidden transition-[width,opacity] duration-[260ms]"
+            style={{
+              width: rightSidebarOpen ? rightSidebarWidth : 0,
+              opacity: rightSidebarOpen ? 1 : 0,
+              transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
           >
-            <RightSidebar />
+            <div
+              className="flex-1 min-h-0 flex flex-col"
+              style={{ width: rightSidebarWidth, minWidth: rightSidebarWidth }}
+            >
+              <RightSidebar />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <SettingsModal />
