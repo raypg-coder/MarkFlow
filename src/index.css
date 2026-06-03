@@ -1466,6 +1466,22 @@
 :root.read-mode .milkdown .milkdown-code-block[data-mf-has-embed] > .mf-embed {
   display: block !important;
 }
+/* In read mode a mermaid/svg block renders as JUST the diagram — strip the
+   code-block frame (bg / border / dots / padding) and hide every child
+   except the rendered embed, so no code-block shell is visible. */
+:root.read-mode .milkdown .milkdown-code-block[data-mf-has-embed] {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+:root.read-mode .milkdown .milkdown-code-block[data-mf-has-embed]::before {
+  display: none !important;
+}
+:root.read-mode .milkdown .milkdown-code-block[data-mf-has-embed] > *:not(.mf-embed) {
+  display: none !important;
+}
 
 /* ─── In-document find (Cmd+F) highlights via CSS Custom Highlight API ── */
 ::highlight(mf-find) {
