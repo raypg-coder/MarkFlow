@@ -217,20 +217,23 @@ export function AiPanel() {
           </div>
         )}
         {!notConfigured && aiMessages.length === 0 && (
-          <div className="mt-6 text-center text-[12px] text-[var(--color-text-subtle)] leading-relaxed px-4">
-            和文档对话。试试：
-            <div className="mt-3 flex flex-col gap-1.5 items-stretch">
+          <div className="mt-8 px-1">
+            <div className="flex flex-col items-center text-center mb-4">
+              <span className="ai-hero-icon"><Sparkles size={20} strokeWidth={1.75} /></span>
+              <div className="text-[13px] font-medium text-[var(--color-text)] mt-2.5">和文档对话</div>
+              <div className="text-[11.5px] text-[var(--color-text-subtle)] mt-1">
+                {activeFile?.kind === "markdown" ? `已附带「${activeFile.name}」作为上下文` : "选一个 Markdown 文件以附带上下文"}
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
               {[
                 "总结一下这篇文档",
                 "用三个要点解释这段内容",
                 "把这段翻译成英文",
               ].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setInput(s)}
-                  className="text-[12px] text-left px-3 py-2 rounded-xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
-                >
-                  {s}
+                <button key={s} onClick={() => setInput(s)} className="ai-suggest">
+                  <span className="ai-suggest-text">{s}</span>
+                  <CornerDownLeft size={11} strokeWidth={1.75} className="ai-suggest-arrow" />
                 </button>
               ))}
             </div>
@@ -265,6 +268,7 @@ export function AiPanel() {
             placeholder={notConfigured ? "请先在设置中配置模型" : "输入消息  (Enter 发送 · Shift+Enter 换行)"}
             disabled={notConfigured}
             rows={1}
+            style={{ fontFamily: "var(--font-sans)" }}
             className="block w-full resize-none bg-transparent outline-none px-2.5 py-1.5 text-[13px] placeholder:text-[var(--color-text-subtle)]"
           />
           <div className="flex items-center justify-end gap-1 px-1.5 pb-1.5">
@@ -343,12 +347,10 @@ function Message({
 
   return (
     <div className="mb-3">
-      <div className="flex items-center gap-1.5 mb-1">
-        {isUser ? (
-          <User size={11} strokeWidth={2} className="text-[var(--color-text-muted)]" />
-        ) : (
-          <Sparkles size={11} strokeWidth={2} className="text-[var(--color-accent)]" />
-        )}
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className={`ai-avatar ${isUser ? "is-user" : "is-ai"}`}>
+          {isUser ? <User size={11} strokeWidth={2} /> : <Sparkles size={11} strokeWidth={2} />}
+        </span>
         <span className="text-[10.5px] uppercase tracking-wider text-[var(--color-text-subtle)] font-medium">
           {isUser ? "你" : "助手"}
         </span>

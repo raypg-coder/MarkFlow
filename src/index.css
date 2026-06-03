@@ -2304,6 +2304,59 @@ input:focus, textarea:focus {
    sidebar. Smaller scale than the main editor since the column
    is narrow (~280px).
    ============================================================ */
+/* ── AI panel · avatars, hero, suggestion cards ── */
+.ai-avatar {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ai-avatar.is-ai {
+  color: #fff;
+  background: linear-gradient(180deg, #3a9bff, var(--color-accent));
+  box-shadow: 0 2px 6px var(--color-accent-glow);
+}
+.ai-avatar.is-user {
+  color: var(--color-text-muted);
+  background: color-mix(in oklab, var(--color-text) 9%, transparent);
+}
+.ai-hero-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.ai-suggest {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 11px;
+  background: var(--color-bg-soft);
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.ai-suggest:hover {
+  background: var(--color-bg);
+  border-color: color-mix(in oklab, var(--color-accent) 32%, transparent);
+  color: var(--color-text);
+}
+.ai-suggest-text { flex: 1; min-width: 0; }
+.ai-suggest-arrow { color: var(--color-text-faint); flex-shrink: 0; }
+.ai-suggest:hover .ai-suggest-arrow { color: var(--color-accent); }
+
 .ai-md {
   font-size: 12.5px;
   line-height: 1.6;

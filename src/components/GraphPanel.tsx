@@ -123,7 +123,7 @@ export function GraphPanel() {
 
   // Build the data to render (limit by depth around activePath if set)
   const data = useMemo(() => {
-    if (!linkGraph) return { nodes: [] as Node[], links: [] as Link[] };
+    if (!linkGraph) return { nodes: [] as Node[], links: [] as Link[], degree: new Map<string, number>() };
     let sub: { nodes: GraphNode[]; edges: { source: string; target: string }[] };
     if (depth !== "all" && activePath && linkGraph.nodes.some((n) => n.id === activePath)) {
       sub = localSubgraph(linkGraph.nodes, linkGraph.edges, activePath, depth);
@@ -141,21 +141,38 @@ export function GraphPanel() {
       __isNeighbor: neighborSet.has(n.id),
     }));
     const links: Link[] = sub.edges.map((e) => ({ source: e.source, target: e.target }));
-    return { nodes, links };
+    // Degree map — drives node sizing (hubs render larger)
+    const degree = new Map<string, number>();
+    for (const e of sub.edges) {
+      degree.set(e.source, (degree.get(e.source) ?? 0) + 1);
+      degree.set(e.target, (degree.get(e.target) ?? 0) + 1);
+    }
+    return { nodes, links, degree };
   }, [linkGraph, activePath, depth]);
 
   // Re-read colors when theme changes
   const colors = useMemo(() => {
     return {
-      bg: resolveColor("var(--color-bg-soft)"),
+      bg: resolveColor("var(--color-bg)"),            // solid canvas (was translucent glass token)
       text: resolveColor("var(--color-text-muted)"),
       textActive: resolveColor("var(--color-text)"),
       accent: resolveColor("var(--color-accent)"),
+      link: resolveColor("var(--color-border-strong)"),
       border: resolveColor("var(--color-border)"),
       borderStrong: resolveColor("var(--color-border-strong)"),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
+
+  // Returns true if a link touches the currently highlighted node
+  // (hovered, or the active doc when nothing is hovered).
+  const linkIsHot = (l: Link): boolean => {
+    const focus = hoverNode ?? activePath;
+    if (!focus) return false;
+    const s = typeof l.source === "string" ? l.source : String(l.source.id);
+    const t = typeof l.target === "string" ? l.target : String(l.target.id);
+    return s === focus || t === focus;
+  };
 
   const handleNodeClick = useCallback(
     (node: object) => {
@@ -273,8 +290,9 @@ export function GraphPanel() {
             graphData={data}
             backgroundColor={colors.bg}
             nodeRelSize={4}
-            linkColor={() => colors.border}
-            linkWidth={1}
+            linkColor={(l) => (linkIsHot(l as Link) ? colors.accent : colors.link)}
+            linkWidth={(l) => (linkIsHot(l as Link) ? 1.6 : 0.7)}
+            linkDirectionalParticles={0}
             cooldownTicks={120}
             onEngineStop={handleEngineStop}
             onNodeClick={(n) => handleNodeClick(n as object)}
@@ -283,51 +301,50 @@ export function GraphPanel() {
               const n = node as Node;
               const dim = isDim(n.id);
               const isActive = n.__isActive;
-              const r = isActive ? 6 : 4;
+              const deg = data.degree.get(n.id) ?? 0;
+              // radius scales with degree so hubs read as hubs
+              const baseR = 3 + Math.min(deg, 10) * 0.55;
+              const r = isActive ? baseR + 1.5 : baseR;
               const fill = isActive ? colors.accent : resolveColor(nodeColor(n, colorBy));
+              const cx = n.x ?? 0;
+              const cy = n.y ?? 0;
 
-              ctx.globalAlpha = dim ? 0.25 : 1;
+              ctx.globalAlpha = dim ? 0.18 : 1;
+
+              // soft glow halo for the active node
+              if (isActive && !dim) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+                ctx.fillStyle = colors.accent;
+                ctx.globalAlpha = 0.16;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+              }
 
               // node circle
               ctx.beginPath();
-              ctx.arc(n.x ?? 0, n.y ?? 0, r, 0, Math.PI * 2);
+              ctx.arc(cx, cy, r, 0, Math.PI * 2);
               ctx.fillStyle = fill;
               ctx.fill();
-
               if (isActive) {
                 ctx.lineWidth = 1.5;
                 ctx.strokeStyle = colors.textActive;
                 ctx.stroke();
               }
 
-              // label
-              const fontSize = Math.max(10, 11 / globalScale);
-              ctx.font = `${fontSize}px -apple-system, system-ui, sans-serif`;
-              ctx.textAlign = "center";
-              ctx.textBaseline = "top";
-              ctx.fillStyle = isActive ? colors.textActive : colors.text;
-              ctx.fillText(n.name || basename(n.id), n.x ?? 0, (n.y ?? 0) + r + 2);
+              // label — only when zoomed in enough, or for active / neighbor /
+              // hovered nodes, so dense graphs stay readable
+              const showLabel =
+                globalScale > 1.3 || isActive || n.__isNeighbor || n.id === hoverNode;
+              if (showLabel && !dim) {
+                const fontSize = Math.max(9, 10.5 / globalScale);
+                ctx.font = `${fontSize}px Inter, -apple-system, system-ui, sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                ctx.fillStyle = isActive ? colors.textActive : colors.text;
+                ctx.fillText(n.name || basename(n.id), cx, cy + r + 2);
+              }
 
-              ctx.globalAlpha = 1;
-            }}
-            linkCanvasObjectMode={() => "after"}
-            linkCanvasObject={(link, ctx) => {
-              const s = link.source as Node;
-              const t = link.target as Node;
-              const sId = String(s.id ?? "");
-              const tId = String(t.id ?? "");
-              const dim =
-                hoverNode != null &&
-                sId !== hoverNode && tId !== hoverNode;
-              if (!dim) return;
-              // override alpha for dimmed links by re-drawing transparent over
-              ctx.globalAlpha = 0.15;
-              ctx.beginPath();
-              ctx.moveTo(s.x ?? 0, s.y ?? 0);
-              ctx.lineTo(t.x ?? 0, t.y ?? 0);
-              ctx.strokeStyle = colors.bg;
-              ctx.lineWidth = 1.5;
-              ctx.stroke();
               ctx.globalAlpha = 1;
             }}
           />
