@@ -136,9 +136,27 @@ export function AiPanel() {
         model: activeModel,
         signal: ac.signal,
       });
+      // Throttle UI updates: batch deltas and flush at most ~every 60ms.
+      // Streaming token-by-token would re-render (and previously re-parse
+      // markdown of) the whole growing message on every token → quadratic
+      // jank that froze long responses.
+      let buffer = "";
+      let lastFlush = 0;
+      const flush = () => {
+        if (!buffer) return;
+        const chunk = buffer;
+        buffer = "";
+        updateLastAiMessage((prev) => prev + chunk);
+      };
       for await (const delta of stream) {
-        updateLastAiMessage((prev) => prev + delta);
+        buffer += delta;
+        const now = performance.now();
+        if (now - lastFlush >= 60) {
+          lastFlush = now;
+          flush();
+        }
       }
+      flush(); // final tail
     } catch (e: any) {
       if (e?.name !== "AbortError") {
         updateLastAiMessage(
@@ -353,9 +371,13 @@ function Message({
 }) {
   const isUser = message.role === "user";
 
+  // Parse markdown ONLY when not streaming. Parsing on every streamed token
+  // re-parses the whole growing message → O(n²) and froze long responses.
+  // While streaming we show cheap plain text; the full render happens once
+  // the stream completes.
   const html = useMemo(
-    () => (isUser ? null : renderMarkdown(message.content)),
-    [isUser, message.content],
+    () => (isUser || streaming ? null : renderMarkdown(message.content)),
+    [isUser, streaming, message.content],
   );
 
   return (
@@ -376,6 +398,11 @@ function Message({
         <div className="ai-md text-[var(--color-text)] relative">
           {message.content.length === 0 && streaming ? (
             <span className="text-[12.5px] text-[var(--color-text-subtle)]">思考中…</span>
+          ) : streaming ? (
+            // cheap plain-text render while streaming (no markdown parse)
+            <div className="whitespace-pre-wrap break-words text-[12.5px] leading-relaxed">
+              {message.content}
+            </div>
           ) : (
             <div dangerouslySetInnerHTML={{ __html: html ?? "" }} />
           )}
