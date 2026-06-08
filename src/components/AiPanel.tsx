@@ -95,32 +95,37 @@ export function AiPanel() {
     const userText = input.trim();
     setInput("");
 
-    // Compose final messages: system + history + current user
-    const sys: ChatMessage[] = [];
-    sys.push({
-      role: "system",
-      content:
-        "你是 MarkFlow 内嵌的写作助手。回答简洁、直接。若用户给了文档上下文，基于该上下文作答；否则按通用知识作答。Markdown 输出。",
-    });
+    // Build the document context block. We embed it into the USER message
+    // (not a separate system message) because many OpenAI-compatible
+    // providers keep only the FIRST system message and drop the rest — which
+    // silently lost the document. A user message is honored everywhere.
+    let docCtx: string | null = null;
     if (contextMode === "doc" && activePath) {
-      // Force the editor to flush any pending (debounced) edits to the store,
-      // then read the FRESHEST content — otherwise we'd attach a value up to
-      // ~150ms stale, or miss edits entirely.
+      // Flush pending (debounced) editor edits, then read the freshest content.
       window.dispatchEvent(new Event("markflow:flush-editor"));
       const fresh = useStore.getState().openFiles.find((f) => f.path === activePath);
       if (fresh && fresh.content.trim()) {
         const trimmed = fresh.content.slice(0, 16000);
         const langNote = fresh.kind && fresh.kind !== "markdown" ? `（${fresh.kind} 文件）` : "";
-        sys.push({
-          role: "system",
-          content: `当前文件「${fresh.name}」${langNote}内容如下:\n\n<document>\n${trimmed}\n</document>`,
-        });
+        docCtx = `以下是当前文件「${fresh.name}」${langNote}的完整内容，请基于它回答我的问题：\n\n<document>\n${trimmed}\n</document>`;
       }
     }
-    const userMsg: ChatMessage = { role: "user", content: userText };
-    const messages: ChatMessage[] = [...sys, ...aiMessages, userMsg];
 
-    appendAiMessage(userMsg);
+    const sysMsg: ChatMessage = {
+      role: "system",
+      content:
+        "你是 MarkFlow 内嵌的写作助手。回答简洁、直接。若提供了文档上下文，请严格基于文档内容作答；否则按通用知识作答。Markdown 输出。",
+    };
+    // What the user sees in the chat (clean), vs what we send to the API
+    // (with the document prepended when context is on).
+    const displayUser: ChatMessage = { role: "user", content: userText };
+    const apiUser: ChatMessage = {
+      role: "user",
+      content: docCtx ? `${docCtx}\n\n---\n\n我的问题：${userText}` : userText,
+    };
+    const messages: ChatMessage[] = [sysMsg, ...aiMessages, apiUser];
+
+    appendAiMessage(displayUser);
     appendAiMessage({ role: "assistant", content: "" });
     setAiPending(true);
 
