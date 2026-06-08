@@ -30,6 +30,13 @@ const COLUMNS: { key: MissionPriority; label: string; tint: string }[] = [
   { key: "low", label: "低", tint: "var(--color-text-muted)" },
 ];
 
+type StatusFilter = "all" | "active" | "done";
+const STATUS_TABS: { key: StatusFilter; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "active", label: "进行中" },
+  { key: "done", label: "已完成" },
+];
+
 export function MissionBoard() {
   const {
     missions,
@@ -41,9 +48,10 @@ export function MissionBoard() {
     setMissionsFullView,
   } = useStore();
 
-  const [hideDone, setHideDone] = useState(false);
+  const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [deadlineId, setDeadlineId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -53,19 +61,20 @@ export function MissionBoard() {
   const done = missions.filter((m) => m.completed).length;
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
 
-  // Group missions into lanes, preserving the flat-array order
   const q = query.trim().toLowerCase();
   const lanes = useMemo(() => {
     const g: Record<MissionPriority, Mission[]> = { critical: [], high: [], mid: [], low: [] };
     for (const m of missions) {
-      if (hideDone && m.completed) continue;
+      if (status === "active" && m.completed) continue;
+      if (status === "done" && !m.completed) continue;
       if (q && !m.title.toLowerCase().includes(q)) continue;
       g[m.priority].push(m);
     }
     return g;
-  }, [missions, hideDone, q]);
+  }, [missions, status, q]);
 
   const activeMission = activeId ? missions.find((m) => m.id === activeId) ?? null : null;
+  const deadlineMission = deadlineId ? missions.find((m) => m.id === deadlineId) ?? null : null;
 
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
@@ -92,14 +101,28 @@ export function MissionBoard() {
 
   return (
     <div className="mission-board">
-      {/* Header */}
+      {/* Toolbar */}
       <div className="mission-board-head">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0 shrink-0">
           <span className="mission-board-icon"><Target size={16} strokeWidth={2} /></span>
           <h1 className="mission-board-title">任务看板</h1>
           <span className="mission-board-count">{done} / {total}</span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+
+        <div className="mission-board-tools">
+          {/* status segmented */}
+          <div className="mission-seg">
+            {STATUS_TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setStatus(t.key)}
+                className={`mission-seg-btn ${status === t.key ? "is-on" : ""}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {/* search */}
           <div className="mission-board-search">
             <Search size={13} strokeWidth={1.75} />
             <input
@@ -114,17 +137,11 @@ export function MissionBoard() {
               </button>
             )}
           </div>
-          <div className="mission-board-progress">
+          {/* progress */}
+          <div className="mission-board-progress" title={`${done}/${total} 已完成`}>
             <div className="mission-board-progress-fill" style={{ width: `${pct}%` }} />
           </div>
           <span className="mission-board-pct">{pct}%</span>
-          <button
-            onClick={() => setHideDone((v) => !v)}
-            className={`mission-board-toggle ${hideDone ? "is-on" : ""}`}
-            title="隐藏 / 显示已完成"
-          >
-            {hideDone ? "显示已完成" : "隐藏已完成"}
-          </button>
           <button
             onClick={() => setMissionsFullView(false)}
             className="mission-board-close"
@@ -139,12 +156,12 @@ export function MissionBoard() {
       {total === 0 ? (
         <BoardEmpty onAdd={(t) => addMission(t, "mid")} />
       ) : (
-      /* Columns */
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
+        onDragCancel={() => setActiveId(null)}
       >
         <div className="mission-board-cols">
           {COLUMNS.map((col) => (
@@ -152,10 +169,11 @@ export function MissionBoard() {
               key={col.key}
               col={col}
               items={lanes[col.key]}
+              dragging={!!activeId}
               onAdd={(title) => addMission(title, col.key)}
               onToggle={toggleMission}
               onDelete={deleteMission}
-              onUpdate={updateMission}
+              onEditDeadline={setDeadlineId}
             />
           ))}
         </div>
@@ -164,6 +182,21 @@ export function MissionBoard() {
           {activeMission ? <CardBody mission={activeMission} overlay /> : null}
         </DragOverlay>
       </DndContext>
+      )}
+
+      {/* Deadline editor — board-level centered popover so it isn't clipped
+          by the column's overflow:auto. */}
+      {deadlineMission && (
+        <div
+          className="mission-date-scrim"
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setDeadlineId(null); }}
+        >
+          <DatePicker
+            value={deadlineMission.deadline}
+            onChange={(ts) => updateMission(deadlineMission.id, { deadline: ts })}
+            onClose={() => setDeadlineId(null)}
+          />
+        </div>
       )}
     </div>
   );
@@ -199,17 +232,19 @@ function BoardEmpty({ onAdd }: { onAdd: (title: string) => void }) {
 function Column({
   col,
   items,
+  dragging,
   onAdd,
   onToggle,
   onDelete,
-  onUpdate,
+  onEditDeadline,
 }: {
   col: { key: MissionPriority; label: string; tint: string };
   items: Mission[];
+  dragging: boolean;
   onAdd: (title: string) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, patch: Partial<Mission>) => void;
+  onEditDeadline: (id: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `col-${col.key}` });
   const [adding, setAdding] = useState(false);
@@ -223,7 +258,11 @@ function Column({
   };
 
   return (
-    <div className={`mission-col ${isOver ? "is-over" : ""}`} ref={setNodeRef}>
+    <div
+      className={`mission-col ${isOver ? "is-over" : ""} ${dragging ? "is-dragging-any" : ""}`}
+      ref={setNodeRef}
+      style={{ ["--lane-tint" as string]: col.tint }}
+    >
       <div className="mission-col-head">
         <span className="mission-col-dot" style={{ background: col.tint }} />
         <span className="mission-col-label">{col.label}</span>
@@ -238,12 +277,14 @@ function Column({
               mission={m}
               onToggle={() => onToggle(m.id)}
               onDelete={() => onDelete(m.id)}
-              onUpdate={(patch) => onUpdate(m.id, patch)}
+              onEditDeadline={() => onEditDeadline(m.id)}
             />
           ))}
         </SortableContext>
 
-        {items.length === 0 && <div className="mission-col-empty">拖拽任务到此</div>}
+        {items.length === 0 && (
+          <div className="mission-col-empty">{dragging ? "放到这里" : "暂无任务"}</div>
+        )}
 
         {adding ? (
           <div className="mission-add-card">
@@ -274,17 +315,16 @@ function SortableCard({
   mission,
   onToggle,
   onDelete,
-  onUpdate,
+  onEditDeadline,
 }: {
   mission: Mission;
   onToggle: () => void;
   onDelete: () => void;
-  onUpdate: (patch: Partial<Mission>) => void;
+  onEditDeadline: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: mission.id,
   });
-  const [editingDate, setEditingDate] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
 
   // While editing the title, drag listeners are detached so typing /
@@ -303,11 +343,10 @@ function SortableCard({
         mission={mission}
         onToggle={onToggle}
         onDelete={onDelete}
-        editingDate={editingDate}
-        setEditingDate={setEditingDate}
         editingTitle={editingTitle}
         setEditingTitle={setEditingTitle}
-        onUpdate={onUpdate}
+        onEditDeadline={onEditDeadline}
+        onUpdate={(patch) => useStore.getState().updateMission(mission.id, patch)}
       />
     </div>
   );
@@ -317,24 +356,28 @@ function CardBody({
   mission,
   onToggle,
   onDelete,
-  editingDate,
-  setEditingDate,
   editingTitle,
   setEditingTitle,
+  onEditDeadline,
   onUpdate,
   overlay,
 }: {
   mission: Mission;
   onToggle?: () => void;
   onDelete?: () => void;
-  editingDate?: boolean;
-  setEditingDate?: (v: boolean) => void;
   editingTitle?: boolean;
   setEditingTitle?: (v: boolean) => void;
+  onEditDeadline?: () => void;
   onUpdate?: (patch: Partial<Mission>) => void;
   overlay?: boolean;
 }) {
-  const stop = (e: React.MouseEvent | React.PointerEvent) => e.stopPropagation();
+  // NOTE: inner controls do NOT stopPropagation on pointerdown — that would
+  // block a drag from starting on top of them. dnd-kit's 6px distance
+  // threshold already separates a click (toggle / edit / delete / deadline)
+  // from a drag, so the WHOLE card is draggable from anywhere while buttons
+  // still respond to plain clicks. Only the title input swallows pointerdown
+  // (so selecting text doesn't drag).
+  const stopClick = (e: React.MouseEvent) => e.stopPropagation();
   const commitTitle = (raw: string) => {
     const t = raw.trim();
     if (t && t !== mission.title) onUpdate?.({ title: t });
@@ -343,7 +386,7 @@ function CardBody({
   return (
     <div className={`mission-bcard group ${mission.completed ? "is-done" : ""} ${overlay ? "is-overlay" : ""}`}>
       <div className="flex items-start gap-2.5">
-        <span onPointerDown={stop} onClick={stop} className="shrink-0">
+        <span onClick={stopClick} className="shrink-0">
           <RoundCheckbox checked={mission.completed} onClick={onToggle ?? (() => {})} />
         </span>
         <div className="flex-1 min-w-0">
@@ -351,7 +394,7 @@ function CardBody({
             <input
               autoFocus
               defaultValue={mission.title}
-              onPointerDown={stop}
+              onPointerDown={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === "Enter") commitTitle((e.target as HTMLInputElement).value);
                 if (e.key === "Escape") setEditingTitle?.(false);
@@ -362,22 +405,22 @@ function CardBody({
           ) : (
             <div
               className={`mission-bcard-title ${mission.completed ? "is-done" : ""}`}
-              onClick={overlay ? undefined : () => setEditingTitle?.(true)}
+              onClick={overlay ? undefined : (e) => { stopClick(e); setEditingTitle?.(true); }}
               title={overlay ? undefined : "点击编辑"}
             >
               {mission.title}
             </div>
           )}
-          <div className="flex items-center gap-2 mt-1.5" onPointerDown={stop}>
+          <div className="flex items-center gap-2 mt-1.5">
             {mission.deadline ? (
-              <button onClick={() => setEditingDate?.(true)} className="hover:opacity-80 cursor-pointer" title="修改截止时间">
+              <button onClick={(e) => { stopClick(e); onEditDeadline?.(); }} className="hover:opacity-80 cursor-pointer" title="修改截止时间">
                 <CountdownClock deadline={mission.deadline} />
               </button>
             ) : (
               !overlay && (
                 <button
-                  onClick={() => setEditingDate?.(true)}
-                  className="text-[10px] text-[var(--color-text-subtle)] hover:text-[var(--color-accent)] flex items-center gap-1 transition-colors"
+                  onClick={(e) => { stopClick(e); onEditDeadline?.(); }}
+                  className="mission-bcard-due"
                   title="设置截止时间"
                 >
                   <Clock size={9.5} strokeWidth={1.75} /> 截止
@@ -388,8 +431,7 @@ function CardBody({
         </div>
         {!overlay && (
           <button
-            onPointerDown={stop}
-            onClick={(e) => { stop(e); onDelete?.(); }}
+            onClick={(e) => { stopClick(e); onDelete?.(); }}
             className="opacity-0 group-hover:opacity-100 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] transition-opacity p-1 -m-1 shrink-0"
             title="删除"
           >
@@ -397,16 +439,6 @@ function CardBody({
           </button>
         )}
       </div>
-
-      {editingDate && (
-        <div className="relative" onPointerDown={stop}>
-          <DatePicker
-            value={mission.deadline}
-            onChange={(ts) => onUpdate?.({ deadline: ts })}
-            onClose={() => setEditingDate?.(false)}
-          />
-        </div>
-      )}
     </div>
   );
 }

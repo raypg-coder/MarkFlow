@@ -2603,10 +2603,44 @@ input:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 24px 14px;
+  gap: 12px 16px;
+  padding: 16px 24px 14px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
+.mission-board-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
+}
+/* status segmented control */
+.mission-seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-text) 6%, transparent);
+}
+.mission-seg-btn {
+  font-size: 11.5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+  white-space: nowrap;
+}
+.mission-seg-btn:hover { color: var(--color-text); }
+.mission-seg-btn.is-on {
+  color: var(--color-text);
+  background: var(--color-bg);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1), inset 0 0 0 1px var(--glass-border);
+  font-weight: 500;
+}
+:root.dark .mission-seg-btn.is-on { background: color-mix(in oklab, #fff 10%, transparent); }
 .mission-board-icon {
   width: 26px;
   height: 26px;
@@ -2694,6 +2728,7 @@ input:focus, textarea:focus {
   align-items: stretch;
 }
 .mission-col {
+  position: relative;
   flex: 1 1 0;
   min-width: 240px;
   max-width: 420px;
@@ -2706,19 +2741,36 @@ input:focus, textarea:focus {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   box-shadow: 0 8px 28px rgba(60, 40, 90, 0.08);
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  overflow: hidden;                /* clip the top accent bar to the radius */
+}
+/* colored lane accent bar across the top */
+.mission-col::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--lane-tint, var(--color-accent));
+  opacity: 0.85;
 }
 :root.dark .mission-col {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
 }
+/* While any drag is in progress, idle columns hint they can receive */
+.mission-col.is-dragging-any {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--color-text) 18%, transparent);
+}
 .mission-col.is-over {
-  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--color-accent) 60%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 7%, var(--glass-bg));
   box-shadow: 0 0 0 3px var(--color-accent-soft), 0 8px 28px rgba(60, 40, 90, 0.12);
 }
 .mission-col-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 13px 14px 9px;
+  padding: 14px 14px 9px;
   flex-shrink: 0;
 }
 .mission-col-dot {
@@ -2758,7 +2810,43 @@ input:focus, textarea:focus {
   padding: 18px 0;
   border: 1px dashed color-mix(in oklab, var(--color-text) 12%, transparent);
   border-radius: 10px;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
+.mission-col.is-over .mission-col-empty {
+  border-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+/* card "截止" affordance */
+.mission-bcard-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--color-text-subtle);
+  transition: color 140ms ease;
+}
+.mission-bcard-due:hover { color: var(--color-accent); }
+
+/* deadline editor — centered popover over a scrim (escapes column overflow) */
+.mission-date-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: color-mix(in oklab, #000 28%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 140ms ease both;
+}
+/* neutralize the picker's own absolute positioning when shown in the scrim */
+.mission-date-scrim .date-picker {
+  position: static;
+  margin: 0;
+}
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
 
 /* ── cards ── */
 .mission-bcard-wrap { outline: none; }
