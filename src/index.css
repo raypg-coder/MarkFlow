@@ -203,13 +203,26 @@
   color: var(--chrome-text);
 }
 .app-topbar {
-  background: var(--color-bg-chrome);
+  /* NO backdrop-filter / background here: this is the data-tauri-drag-region
+     element, and a filter on the drag element breaks window dragging on
+     macOS. The glass is painted by ::before (pointer-events:none) instead. */
+  background: transparent;
   color: var(--chrome-text);
   position: relative;
   border-bottom: 1px solid var(--color-border);
+}
+.app-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-chrome);
   backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+  pointer-events: none;       /* never intercept the drag hit-test */
+  z-index: 0;
 }
+/* topbar content sits above the glass layer */
+.app-topbar > * { position: relative; z-index: 1; }
 .app-topbar::after { display: none; }
 .app-panel {
   background: var(--color-bg);     /* solid editor surface */
