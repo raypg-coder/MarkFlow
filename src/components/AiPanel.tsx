@@ -102,12 +102,20 @@ export function AiPanel() {
       content:
         "你是 MarkFlow 内嵌的写作助手。回答简洁、直接。若用户给了文档上下文，基于该上下文作答；否则按通用知识作答。Markdown 输出。",
     });
-    if (contextMode === "doc" && activeFile && activeFile.kind === "markdown") {
-      const trimmed = activeFile.content.slice(0, 16000);
-      sys.push({
-        role: "system",
-        content: `当前文档「${activeFile.name}」内容如下:\n\n<document>\n${trimmed}\n</document>`,
-      });
+    if (contextMode === "doc" && activePath) {
+      // Force the editor to flush any pending (debounced) edits to the store,
+      // then read the FRESHEST content — otherwise we'd attach a value up to
+      // ~150ms stale, or miss edits entirely.
+      window.dispatchEvent(new Event("markflow:flush-editor"));
+      const fresh = useStore.getState().openFiles.find((f) => f.path === activePath);
+      if (fresh && fresh.content.trim()) {
+        const trimmed = fresh.content.slice(0, 16000);
+        const langNote = fresh.kind && fresh.kind !== "markdown" ? `（${fresh.kind} 文件）` : "";
+        sys.push({
+          role: "system",
+          content: `当前文件「${fresh.name}」${langNote}内容如下:\n\n<document>\n${trimmed}\n</document>`,
+        });
+      }
     }
     const userMsg: ChatMessage = { role: "user", content: userText };
     const messages: ChatMessage[] = [...sys, ...aiMessages, userMsg];
@@ -197,8 +205,8 @@ export function AiPanel() {
         <ContextChip
           active={contextMode === "doc"}
           onClick={() => setContextMode(contextMode === "doc" ? "none" : "doc")}
-          disabled={!activeFile || activeFile.kind !== "markdown"}
-          label="当前文件"
+          disabled={!activeFile}
+          label={activeFile ? `当前文件 · ${activeFile.name}` : "当前文件"}
         />
       </div>
 
@@ -222,7 +230,7 @@ export function AiPanel() {
               <span className="ai-hero-icon"><Sparkles size={20} strokeWidth={1.75} /></span>
               <div className="text-[13px] font-medium text-[var(--color-text)] mt-2.5">和文档对话</div>
               <div className="text-[11.5px] text-[var(--color-text-subtle)] mt-1">
-                {activeFile?.kind === "markdown" ? `已附带「${activeFile.name}」作为上下文` : "选一个 Markdown 文件以附带上下文"}
+                {activeFile ? `已附带「${activeFile.name}」作为上下文` : "打开一个文件即可附带其内容作为上下文"}
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
